@@ -1,0 +1,14 @@
+description: "Evaluación mínima de Promptfoo para Parachute S.A."
+
+prompts:
+  - "{{question}}"
+
+providers:
+  - file://provider.py
+
+tests:
+  - vars:
+      question: "¿Cuál es el peso máximo permitido para saltar?"
+    assert:
+      - type: contains
+        value: "100 kg"
