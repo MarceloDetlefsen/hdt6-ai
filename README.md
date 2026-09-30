@@ -1,6 +1,6 @@
-# Hoja de Trabajo 5 - Orquestación Multiagente: Centralizada, Jerárquica y Descentralizada
+# Hoja de Trabajo 6 - Evals con Promptfoo
 
-Sistema de asistencia conversacional para **Parachute S.A.** con integración a la base de conocimientos de FAQs (HDT4), verificación meteorológica en tiempo real mediante la API de Open-Meteo y agendamiento seguro de citas para paracaidismo, implementado bajo tres patrones de orquestación multiagente: **Centralizada**, **Jerárquica** y **Descentralizada**.
+Sistema de asistencia conversacional para **Parachute S.A.** con integración a la base de conocimientos de FAQs (HDT4), verificación meteorológica en tiempo real mediante la API de Open-Meteo y agendamiento seguro de citas para paracaidismo, implementado bajo tres patrones de orquestación multiagente: Centralizada, Jerárquica y Descentralizada. Se seleccionó la aquitectura **Centralizada** para realizar la HDT6.
 
 ---
 
