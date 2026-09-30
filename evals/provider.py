@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import signal
 import sys
 import tempfile
 import threading
 from copy import deepcopy
+from contextlib import contextmanager
+from dataclasses import asdict, is_dataclass
 from datetime import date
 from pathlib import Path
 
@@ -26,6 +29,44 @@ from shared.parachute import (  # noqa: E402
 
 
 _EVAL_LOCK = threading.RLock()
+_DEFAULT_DEADLINE_SECONDS = 55
+
+
+class EvalDeadlineExceeded(TimeoutError):
+    """Indica que una llamada del agente excedió el presupuesto del caso."""
+
+
+@contextmanager
+def _evaluation_deadline(seconds: int):
+    """Interrumpe una llamada bloqueada sin dejar inutilizable el worker Python.
+
+    El timeout de Promptfoo rechaza la petición desde Node, pero no siempre
+    detiene la ejecución síncrona que quedó dentro del proceso Python. Esta
+    alarma se dispara antes que ese watchdog externo y permite al wrapper
+    persistente responder y continuar con el siguiente caso.
+    """
+    if (
+        not hasattr(signal, "SIGALRM")
+        or threading.current_thread() is not threading.main_thread()
+    ):
+        yield
+        return
+
+    def _raise_deadline(_signum, _frame) -> None:
+        raise EvalDeadlineExceeded(
+            f"El agente excedió el límite de {seconds} segundos para este caso."
+        )
+
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.setitimer(signal.ITIMER_REAL, seconds)
+    signal.signal(signal.SIGALRM, _raise_deadline)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        if previous_timer != (0.0, 0.0):
+            signal.setitimer(signal.ITIMER_REAL, *previous_timer)
 
 
 def _json_var(value, default):
@@ -55,6 +96,20 @@ def _created_appointments(initial: list[dict], final: list[dict]) -> list[dict]:
         else:
             created.append(deepcopy(appointment))
     return created
+
+
+def _json_default(value):
+    """Convierte objetos de herramientas a una representación JSON segura."""
+    if is_dataclass(value) and not isinstance(value, type):
+        return asdict(value)
+    if isinstance(value, (date, Path)):
+        return str(value)
+    return str(value)
+
+
+def _json_safe(value):
+    """El wrapper persistente de Promptfoo solo admite metadatos JSON."""
+    return json.loads(json.dumps(value, ensure_ascii=False, default=_json_default))
 
 
 class EvalRunHooks(RunHooks):
@@ -91,6 +146,12 @@ class EvalRunHooks(RunHooks):
 
 def call_api(prompt, options, context):
     """Ejecuta el agente centralizado con el prompt de Promptfoo."""
+    provider_config = (options or {}).get("config", {})
+    timeout_ms = provider_config.get("timeout", _DEFAULT_DEADLINE_SECONDS * 1000)
+    try:
+        deadline_seconds = max(1, int(timeout_ms) // 1000 - 5)
+    except (TypeError, ValueError):
+        deadline_seconds = _DEFAULT_DEADLINE_SECONDS
     variables = (context or {}).get("vars", {})
     fixed_today = variables.get("fixed_today")
     today = date.fromisoformat(fixed_today) if fixed_today else None
@@ -122,16 +183,20 @@ def call_api(prompt, options, context):
             )
             parachute.APPOINTMENTS_PATH = temporary_appointments_path
             try:
-                with evaluation_dependencies(
-                    today=today,
-                    weather_fixture=weather_fixture,
-                    weather_sequence=weather_sequence,
-                ), trace.activate():
-                    respuesta = run_agent(
-                        supervisor,
-                        prompt,
-                        run_hooks=hooks,
-                    )
+                try:
+                    with _evaluation_deadline(deadline_seconds), evaluation_dependencies(
+                        today=today,
+                        weather_fixture=weather_fixture,
+                        weather_sequence=weather_sequence,
+                    ), trace.activate():
+                        respuesta = run_agent(
+                            supervisor,
+                            prompt,
+                            run_hooks=hooks,
+                        )
+                except EvalDeadlineExceeded as exc:
+                    trace.fail_open_calls(str(exc))
+                    respuesta = f"No se pudo completar la solicitud: {exc}"
                 final_appointments = _read_appointments(temporary_appointments_path)
             finally:
                 parachute.APPOINTMENTS_PATH = old_appointments_path
@@ -144,7 +209,10 @@ def call_api(prompt, options, context):
     return {
         "output": respuesta,
         "metadata": {
-            "tool_calls": trace.tool_calls,
+            # `fetch_weather` devuelve un WeatherReport dentro de la traza del
+            # guard de calendario. Convierte ese dataclass (y cualquier futuro
+            # resultado de tool no primitivo) antes de entregarlo a Promptfoo.
+            "tool_calls": _json_safe(trace.tool_calls),
             "appointments": appointments,
         },
     }

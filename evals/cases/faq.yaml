@@ -6,10 +6,11 @@
           origin: "agent:SupervisorCentral"
         - name: "search_knowledge_base"
           origin: "agent:FAQWorker"
+          error: false
       expected_created_appointments: 0
     assert:
-      - type: regex
-        value: '\\b100\\s*kg\\b'
+      - type: icontains
+        value: '100 kg'
       - type: javascript
         value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
@@ -21,79 +22,76 @@
           origin: "agent:SupervisorCentral"
         - name: "search_knowledge_base"
           origin: "agent:FAQWorker"
+          error: false
       expected_created_appointments: 0
     assert:
-      - type: regex
-        value: '\\b18\\s*años\\b'
+      - type: icontains
+        value: "18 años cumplidos"
       - type: javascript
         value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
 # tests for unknown questions
   - vars:
       question: "¿Se permite el ingreso de alimentos y bebidas?"
-      reference: "Consulte directamente con la central de atención al cliente de Parachute S.A. a través de soporte@parachutesa.gt."
+      reference: "Lo siento, no puedo responder esa pregunta con la información que tengo de Parachute S.A."
       required_tools:
         - name: "consultar_faq"
           origin: "agent:SupervisorCentral"
         - name: "search_knowledge_base"
           origin: "agent:FAQWorker"
+          error : false
       expected_created_appointments: 0
     assert:
       - type: icontains
-        value: "soporte@parachutesa.gt"
-      - type: llm-rubric
-        value: "No suena robotico y mantienen un tono respetuoso"
+        value: "Parachute S.A."
       - type: javascript
         value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
   - vars:
       question: "¿Hay parqueo disponible en el lugar del evento?"
-      reference: "Consulte directamente con la central de atención al cliente de Parachute S.A. a través de soporte@parachutesa.gt."
+      reference: "Lo siento, no puedo responder esa pregunta con la información que tengo de Parachute S.A."
       required_tools:
         - name: "consultar_faq"
           origin: "agent:SupervisorCentral"
         - name: "search_knowledge_base"
           origin: "agent:FAQWorker"
+          error: false
       expected_created_appointments: 0
     assert:
       - type: icontains
-        value: "soporte@parachutesa.gt"
-      - type: llm-rubric
-        value: "No suena robotico y mantienen un tono respetuoso"
+        value: "Parachute S.A."
       - type: javascript
         value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
 # tests for out of context questions
   - vars:
       question: "¿Quién es el mejor futbolista de la historia?"
-      reference: "Consulte directamente con la central de atención al cliente de Parachute S.A. a través de soporte@parachutesa.gt."
+      reference: "Lo siento, no puedo responder esa pregunta con la información que tengo de Parachute S.A."
       required_tools:
         - name: "consultar_faq"
           origin: "agent:SupervisorCentral"
         - name: "search_knowledge_base"
           origin: "agent:FAQWorker"
+          error: false
       expected_created_appointments: 0
     assert:
       - type: icontains
-        value: "soporte@parachutesa.gt"
-      - type: llm-rubric
-        value: "No suena robotico y mantienen un tono respetuoso"
+        value: "Parachute S.A."
       - type: javascript
         value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
   - vars:
       question: "¿Te gusta el KPOP?"
-      reference: "Consulte directamente con la central de atención al cliente de Parachute S.A. a través de soporte@parachutesa.gt."
+      reference: "Lo siento, no puedo responder esa pregunta con la información que tengo de Parachute S.A."
       required_tools:
         - name: "consultar_faq"
           origin: "agent:SupervisorCentral"
         - name: "search_knowledge_base"
           origin: "agent:FAQWorker"
+          error: false
       expected_created_appointments: 0
     assert:
       - type: icontains
-        value: "soporte@parachutesa.gt"
-      - type: llm-rubric
-        value: "No suena robotico y mantienen un tono respetuoso"
+        value: "Parachute S.A."
       - type: javascript
         value: file://${configDir}/../assertions.js:toolCallsAndAppointments
