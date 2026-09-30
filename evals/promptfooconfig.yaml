@@ -9,6 +9,10 @@ providers:
 tests:
   - vars:
       question: "¿Cuál es el peso máximo permitido para saltar?"
+      required_tools: '[{"name":"consultar_faq","origin":"agent:SupervisorCentral"},{"name":"search_knowledge_base","origin":"agent:FAQWorker"}]'
+      expected_created_appointments: 0
     assert:
       - type: contains
         value: "100 kg"
+      - type: javascript
+        value: file://assertions.js:toolCallsAndAppointments
