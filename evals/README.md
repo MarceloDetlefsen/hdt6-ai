@@ -43,3 +43,34 @@ ejecutada.
 
 El registro se crea dentro de `call_api`, por lo que cada caso empieza con una
 lista vacía y su primer evento tiene `order: 1`.
+
+## Dependencias aisladas por caso
+
+El proveedor acepta variables opcionales en cada caso de Promptfoo:
+
+- `fixed_today`: fecha `YYYY-MM-DD` que usa la validación real de fechas.
+- `weather_fixture`: objeto JSON con `temperature_c`, `precipitation_mm`,
+  `cloud_cover_pct`, `visibility_m`, `wind_speed_kmh` y `wind_gust_kmh`.
+- `weather_sequence`: lista JSON de fixtures consumidos en orden por cada
+  consulta meteorológica. Esto permite simular un cambio entre la consulta de
+  clima y la reserva.
+- `initial_appointments`: lista JSON con las citas iniciales del caso.
+
+Las reglas de `validate_date`, `evaluate_weather` y `schedule_tool` permanecen
+activas. Cuando se proporciona un fixture, únicamente se sustituye la fuente de
+datos de `fetch_weather`; no se sustituye el LLM ni las herramientas.
+
+Cada caso escribe las citas en un archivo temporal y devuelve el estado en
+`metadata.appointments`:
+
+```json
+{
+  "initial": [],
+  "final": [],
+  "created": []
+}
+```
+
+El archivo temporal, la ruta `APPOINTMENTS_PATH`, la fecha fija y los fixtures
+se restauran al terminar el caso, incluso si ocurre un error. Los evals nunca
+escriben en `data/citas.json`.

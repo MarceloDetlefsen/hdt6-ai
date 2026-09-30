@@ -10,6 +10,7 @@ import urllib.request
 import time
 import shutil
 import subprocess
+from copy import deepcopy
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import asdict, dataclass
@@ -27,6 +28,40 @@ _ACTIVE_TRACE: ContextVar["ToolCallTrace | None"] = ContextVar(
 _ACTIVE_TRACE_ORIGIN: ContextVar[str | None] = ContextVar(
     "parachute_active_tool_origin", default=None
 )
+_ACTIVE_EVAL_TODAY: ContextVar[dt.date | None] = ContextVar(
+    "parachute_active_eval_today", default=None
+)
+_ACTIVE_WEATHER_FIXTURE: ContextVar[dict[str, object] | None] = ContextVar(
+    "parachute_active_weather_fixture", default=None
+)
+
+
+@contextmanager
+def evaluation_dependencies(
+    *,
+    today: dt.date | None = None,
+    weather_fixture: dict[str, object] | None = None,
+    weather_sequence: list[dict[str, object]] | None = None,
+):
+    """Activa dependencias simuladas de evaluación para el turno actual.
+
+    Las reglas de validación y evaluación continúan siendo las mismas; solo se
+    reemplaza la fuente meteorológica durante el contexto.
+    """
+    today_token = _ACTIVE_EVAL_TODAY.set(today)
+    weather_token = _ACTIVE_WEATHER_FIXTURE.set(
+        {
+            "fallback": deepcopy(weather_fixture),
+            "sequence": deepcopy(weather_sequence or []),
+        }
+        if weather_fixture is not None or weather_sequence is not None
+        else None
+    )
+    try:
+        yield
+    finally:
+        _ACTIVE_WEATHER_FIXTURE.reset(weather_token)
+        _ACTIVE_EVAL_TODAY.reset(today_token)
 
 
 class ToolCallTrace:
@@ -199,7 +234,7 @@ def validate_date(date_text: str, today: dt.date | None = None) -> dt.date:
         requested = dt.date.fromisoformat(date_text)
     except ValueError as exc:
         raise ValueError("La fecha debe tener el formato YYYY-MM-DD.") from exc
-    today = today or dt.date.today()
+    today = today or _ACTIVE_EVAL_TODAY.get() or dt.date.today()
     if requested < today:
         raise ValueError("No se pueden calendarizar citas en una fecha pasada.")
     # Los 16 días de Open-Meteo incluyen el día actual: el último día es hoy + 15.
@@ -214,6 +249,33 @@ def _mean(values: list[float]) -> float | None:
 
 def fetch_weather(date_text: str) -> WeatherReport:
     requested = validate_date(date_text)
+    fixture_state = _ACTIVE_WEATHER_FIXTURE.get()
+    if fixture_state is not None:
+        sequence = fixture_state["sequence"]
+        if not isinstance(sequence, list):
+            raise RuntimeError("El estado de la secuencia meteorológica no es válido.")
+        if sequence:
+            fixture = sequence.pop(0)
+        else:
+            fixture = fixture_state["fallback"]
+        if fixture is None:
+            raise RuntimeError(
+                "La secuencia meteorológica de evaluación se agotó y no hay fixture de respaldo."
+            )
+        if not isinstance(fixture, dict):
+            raise ValueError("Cada fixture meteorológico debe ser un objeto JSON.")
+        report = WeatherReport(
+            date=date_text,
+            temperature_c=fixture.get("temperature_c"),
+            precipitation_mm=fixture.get("precipitation_mm"),
+            cloud_cover_pct=fixture.get("cloud_cover_pct"),
+            visibility_m=fixture.get("visibility_m"),
+            wind_speed_kmh=fixture.get("wind_speed_kmh"),
+            wind_gust_kmh=fixture.get("wind_gust_kmh"),
+            decision="",
+            reasons=[],
+        )
+        return evaluate_weather(report)
     params = urllib.parse.urlencode({
         "latitude": LATITUDE,
         "longitude": LONGITUDE,
