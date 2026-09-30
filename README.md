@@ -66,27 +66,61 @@ El sistema resuelve el mismo problema mediante tres arquitecturas independientes
 
 1. **Clonar el repositorio y ubicarse en la raíz del proyecto**:
    ```bash
-   cd orchestration
+   cd hdt6-ai
    ```
 
-2. **Crear archivo `.env` a partir de la plantilla**:
+2. **Crear y configurar el `.env` principal**:
    ```bash
    cp .env.example .env
    ```
-   Configurar las variables requeridas en `.env`:
+
+   Completar como mínimo las variables del proveedor de modelos:
    ```dotenv
    GROQ_API_KEY=gsk_...
-   GROQ_MODEL=llama-3.3-70b-versatile
+   GROQ_MODEL=openai/gpt-oss-20b
+   GROQ_BASE_URL=https://api.groq.com/openai/v1
+   ```
+
+   El mismo archivo contiene las variables de PostgreSQL utilizadas por la HDT4:
+   `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT` y
+   `POSTGRES_HOST`. Estas variables también deben estar disponibles en
+   `hdt4/.env`, porque el cargador de FAQs y la integración RAG leen la configuración
+   desde ese archivo.
+
+   La forma más sencilla de mantener ambos archivos sincronizados es:
+   ```bash
+   cp .env hdt4/.env
    ```
 
 3. **Activar el entorno virtual e instalar dependencias**:
-   Puede reutilizar el venv de la HDT4 o crear uno nuevo:
    ```bash
    python -m venv .venv
    source .venv/bin/activate
    pip install -r requirements.txt
    ```
 
+4. **Cargar las variables de entorno en la sesión actual**:
+   ```bash
+   set -a
+   source .env
+   set +a
+   ```
+
+5. **Levantar PostgreSQL + pgvector con Docker Compose**:
+   ```bash
+   docker compose -f hdt4/docker-compose.yml up -d
+   ```
+
+6. **Cargar el corpus oficial de FAQs**:
+   ```bash
+   python hdt4/src/load_corpus.py \
+     --corpus data/Corpus_FAQs_Parachute_SA_2026.txt
+   ```
+
+   La salida esperada termina con un mensaje similar a:
+   ```text
+   Carga completada: 120 FAQs insertadas/actualizadas. Total actual en la tabla: 120.
+   ```
 ---
 
 ## 4. Ejecución de las Arquitecturas
@@ -97,7 +131,7 @@ Cada programa soporta dos modalidades: **consulta única vía argumentos** o **s
 ```bash
 # Modo consulta única
 python centralizada.py "¿Qué requisitos físicos necesito para saltar?"
-python centralizada.py "Quiero calendarizar una cita el 2026-09-20"
+python centralizada.py "Quiero calendarizar una cita el 2026-10-01"
 
 # Modo chat interactivo
 python centralizada.py
@@ -107,7 +141,7 @@ python centralizada.py
 ```bash
 # Modo consulta única
 python jerarquica.py "¿Cuál es la política de cancelación?"
-python jerarquica.py "Quiero calendarizar una cita el 2026-09-20"
+python jerarquica.py "Quiero calendarizar una cita el 2026-10-01"
 
 # Modo chat interactivo
 python jerarquica.py
@@ -117,7 +151,7 @@ python jerarquica.py
 ```bash
 # Modo consulta única
 python descentralizada.py "Hola, quisiera información de precios y agendar para este sábado"
-python descentralizada.py "Quiero calendarizar una cita el 2026-09-20"
+python descentralizada.py "Quiero calendarizar una cita el 2026-10-01"
 
 # Modo chat interactivo
 python descentralizada.py
