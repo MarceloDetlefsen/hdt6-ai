@@ -9,6 +9,7 @@ providers:
 # Defaults compartidos por P2 y P3. `reference` vive en cada caso y es una
 # referencia independiente de la respuesta generada por el agente.
 defaultTest:
+  merge: true
   assert:
     - type: factuality
       value: "{{reference}}"
