@@ -1,11 +1,51 @@
 """Arquitectura centralizada: un supervisor coordina todos los workers."""
 import sys
 from agents import Agent, function_tool
-from shared.parachute import agent_model, agent_model_settings, faq_tool, run_agent, run_chat, schedule_tool, weather_tool
+from shared.parachute import (
+    agent_model,
+    agent_model_settings,
+    faq_tool,
+    record_observed_call,
+    run_agent,
+    run_chat,
+    schedule_tool,
+    weather_tool,
+)
 
 MODEL = agent_model()
 SETTINGS = agent_model_settings()
-WEATHER_TOOL, FAQ_TOOL, SCHEDULE_TOOL = function_tool(weather_tool), function_tool(faq_tool), function_tool(schedule_tool)
+
+
+def _weather_worker_tool(date: str) -> str:
+    return record_observed_call(
+        "weather_tool",
+        {"date": date},
+        lambda: weather_tool(date),
+        origin="agent:WeatherWorker",
+    )
+
+
+def _faq_worker_tool(question: str) -> str:
+    return record_observed_call(
+        "faq_tool",
+        {"question": question},
+        lambda: faq_tool(question),
+        origin="agent:FAQWorker",
+    )
+
+
+def _calendar_worker_tool(date: str) -> str:
+    return record_observed_call(
+        "schedule_tool",
+        {"date": date},
+        lambda: schedule_tool(date),
+        origin="agent:CalendarWorker",
+    )
+
+
+WEATHER_TOOL = function_tool(_weather_worker_tool, name_override="weather_tool")
+FAQ_TOOL = function_tool(_faq_worker_tool, name_override="faq_tool")
+SCHEDULE_TOOL = function_tool(_calendar_worker_tool, name_override="schedule_tool")
 weather_worker = Agent(name="WeatherWorker", instructions="Usa weather_tool para consultar y evaluar una fecha. Nunca inventes datos.", tools=[WEATHER_TOOL], model=MODEL, model_settings=SETTINGS)
 faq_worker = Agent(name="FAQWorker", instructions="Responde exclusivamente usando faq_tool. Si no hay coincidencia, di que no existe información en las FAQs. Nunca uses conocimiento general ni respondas temas ajenos a Parachute.", tools=[FAQ_TOOL], model=MODEL, model_settings=SETTINGS)
 calendar_worker = Agent(name="CalendarWorker", instructions="Usa schedule_tool para que la propia integración vuelva a consultar el clima. Nunca inventes ni reutilices un reporte.", tools=[SCHEDULE_TOOL], model=MODEL, model_settings=SETTINGS)

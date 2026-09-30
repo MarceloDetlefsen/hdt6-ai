@@ -10,6 +10,8 @@ import urllib.request
 import time
 import shutil
 import subprocess
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import asdict, dataclass
 from pathlib import Path
 import unicodedata
@@ -17,6 +19,129 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(PROJECT_ROOT / ".env")
+
+
+_ACTIVE_TRACE: ContextVar["ToolCallTrace | None"] = ContextVar(
+    "parachute_active_tool_trace", default=None
+)
+_ACTIVE_TRACE_ORIGIN: ContextVar[str | None] = ContextVar(
+    "parachute_active_tool_origin", default=None
+)
+
+
+class ToolCallTrace:
+    """Registro por ejecución de llamadas observadas durante un turno."""
+
+    def __init__(self) -> None:
+        self.tool_calls: list[dict[str, object]] = []
+        self._next_order = 1
+        self.current_origin: str | None = None
+
+    def push_origin(self, value: str) -> str | None:
+        previous = self.current_origin
+        self.current_origin = value
+        return previous
+
+    def pop_origin(self, previous: str | None) -> None:
+        self.current_origin = previous
+
+    @contextmanager
+    def activate(self):
+        token = _ACTIVE_TRACE.set(self)
+        try:
+            yield self
+        finally:
+            _ACTIVE_TRACE.reset(token)
+
+    @contextmanager
+    def origin(self, value: str):
+        token = _ACTIVE_TRACE_ORIGIN.set(value)
+        try:
+            yield
+        finally:
+            _ACTIVE_TRACE_ORIGIN.reset(token)
+
+    def start(self, name: str, arguments: object, origin: str) -> int:
+        order = self._next_order
+        self._next_order += 1
+        self.tool_calls.append(
+            {
+                "order": order,
+                "name": name,
+                "arguments": arguments,
+                "result": None,
+                "error": None,
+                "origin": origin,
+            }
+        )
+        return len(self.tool_calls) - 1
+
+    def finish(
+        self,
+        index: int,
+        *,
+        result: object = None,
+        error: str | None = None,
+    ) -> None:
+        call = self.tool_calls[index]
+        call["result"] = result
+        call["error"] = error
+
+    def fail_open_calls(self, error: str) -> None:
+        """Marca como fallidas las llamadas que no alcanzaron su callback final."""
+        for call in self.tool_calls:
+            if call["result"] is None and call["error"] is None:
+                call["error"] = error
+
+    def completed(
+        self,
+        name: str,
+        arguments: object,
+        *,
+        result: object = None,
+        error: str | None = None,
+        origin: str | None = None,
+    ) -> None:
+        index = self.start(
+            name,
+            arguments,
+            origin or _ACTIVE_TRACE_ORIGIN.get() or "hdt4",
+        )
+        self.finish(index, result=result, error=error)
+
+
+def active_tool_trace() -> ToolCallTrace | None:
+    """Devuelve el registro del turno actual, si existe."""
+    return _ACTIVE_TRACE.get()
+
+
+def active_tool_origin() -> str | None:
+    """Devuelve el agente/origen que está ejecutando la llamada actual."""
+    return _ACTIVE_TRACE_ORIGIN.get() or (
+        _ACTIVE_TRACE.get().current_origin if _ACTIVE_TRACE.get() else None
+    )
+
+
+def record_observed_call(
+    name: str,
+    arguments: object,
+    func,
+    *,
+    origin: str,
+):
+    """Ejecuta y registra una llamada observada fuera de un SDK hook."""
+    trace = active_tool_trace()
+    if trace is None:
+        return func()
+    index = trace.start(name, arguments, origin)
+    with trace.origin(origin):
+        try:
+            result = func()
+        except Exception as exc:
+            trace.finish(index, error=str(exc))
+            raise
+    trace.finish(index, result=result)
+    return result
 
 
 def agent_model():
@@ -261,14 +386,26 @@ def _apply_calendar_guard(user_text: str, output: str) -> str:
         return output
     # Postcondición de seguridad: el texto del LLM nunca puede contradecir
     # el clima real consultado por la integración compartida.
-    report = fetch_weather(date)
+    report = record_observed_call(
+        "fetch_weather",
+        {"date": date},
+        lambda: fetch_weather(date),
+        origin="guard:calendar",
+    )
     metrics = (f"Temperatura: {report.temperature_c} °C; precipitación: {report.precipitation_mm} mm; "
                f"nubes: {report.cloud_cover_pct}%; visibilidad: {report.visibility_m} m; "
                f"viento: {report.wind_speed_kmh} km/h; ráfagas: {report.wind_gust_kmh} km/h.")
     if report.decision == "NO SEGURO / PROHIBIDO":
         return f"Decisión: NO SEGURO / PROHIBIDO.\n{metrics}\nLa cita no fue calendarizada. Razones: {' '.join(report.reasons)}"
     if not output.strip() or "no puedo" in output.lower() or "no dispongo" in output.lower():
-        result = json.loads(schedule_tool(date))
+        result = json.loads(
+            record_observed_call(
+                "schedule_tool",
+                {"date": date},
+                lambda: schedule_tool(date),
+                origin="guard:calendar",
+            )
+        )
         return f"{metrics}\n{result.get('message', 'Resultado de calendarización.') if result.get('scheduled') else result.get('error')}"
     return output
 
@@ -283,10 +420,15 @@ def _apply_domain_guard(user_text: str, output: str) -> str:
         return output
     # HDT4 divide preguntas, consulta cada parte y genera una respuesta
     # fundamentada. No concatenamos ni reinterpretamos sus resultados.
-    return faq_tool(user_text)
+    return record_observed_call(
+        "faq_tool",
+        {"question": user_text},
+        lambda: faq_tool(user_text),
+        origin="guard:domain",
+    )
 
 
-def run_agent(agent, user_text: str) -> str:
+def run_agent(agent, user_text: str, *, run_hooks=None) -> str:
     from agents import Runner
     try:
         # HDT4 definía respuestas deterministas para cortesía; se conserva ese
@@ -301,10 +443,13 @@ def run_agent(agent, user_text: str) -> str:
             conversational = None
         if conversational is not None:
             return conversational
-        output = Runner.run_sync(agent, user_text).final_output or ""
+        output = Runner.run_sync(agent, user_text, hooks=run_hooks).final_output or ""
         output = _apply_calendar_guard(user_text, output)
         return _apply_domain_guard(user_text, output)
     except Exception as exc:
+        trace = active_tool_trace()
+        if trace is not None:
+            trace.fail_open_calls(str(exc))
         return f"No se pudo completar la solicitud. Verifica el modelo y la conexión del proveedor: {exc}"
 
 
