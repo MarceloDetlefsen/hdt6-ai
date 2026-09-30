@@ -1,4 +1,4 @@
-description: "Evaluación mínima de Promptfoo para Parachute S.A."
+description: "Evaluación de Promptfoo para Parachute S.A."
 
 prompts:
   - "{{question}}"
@@ -6,13 +6,17 @@ prompts:
 providers:
   - file://provider.py
 
-tests:
-  - vars:
-      question: "¿Cuál es el peso máximo permitido para saltar?"
-      required_tools: '[{"name":"consultar_faq","origin":"agent:SupervisorCentral"},{"name":"search_knowledge_base","origin":"agent:FAQWorker"}]'
-      expected_created_appointments: 0
-    assert:
-      - type: contains
-        value: "100 kg"
-      - type: javascript
-        value: file://assertions.js:toolCallsAndAppointments
+# Defaults compartidos por P2 y P3. `reference` vive en cada caso y es una
+# referencia independiente de la respuesta generada por el agente.
+defaultTest:
+  assert:
+    - type: factuality
+      value: "{{reference}}"
+      provider: groq:openai/gpt-oss-20b
+    - type: latency
+      # Umbral inicial provisional para desarrollo; no es un requisito del cliente.
+      threshold: 30000
+
+# P2 y P3 mantienen sus casos separados. Estos archivos contienen solamente
+# un caso mínimo de ejemplo y deben ampliarse con sus respectivos datasets.
+tests: file://cases/*.yaml
