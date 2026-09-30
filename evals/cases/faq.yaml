@@ -1,0 +1,11 @@
+- description: "P2 - Caso FAQ mínimo (dataset inicial/provisional)"
+  vars:
+    question: "¿Cuál es el peso máximo permitido para saltar?"
+    reference: "El peso máximo permitido para saltar es de 100 kg."
+    required_tools: '[{"name":"consultar_faq","origin":"agent:SupervisorCentral"},{"name":"search_knowledge_base","origin":"agent:FAQWorker"}]'
+    expected_created_appointments: 0
+  assert:
+    - type: regex
+      value: '\\b100\\s*kg\\b'
+    - type: javascript
+      value: file://../assertions.js:toolCallsAndAppointments

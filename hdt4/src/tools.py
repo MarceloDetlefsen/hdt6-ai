@@ -7,6 +7,12 @@ from typing import Any
 
 from database import search_knowledge_base
 
+try:
+    from shared.parachute import active_tool_origin, active_tool_trace
+except ImportError:
+    active_tool_origin = lambda: None
+    active_tool_trace = lambda: None
+
 
 SEARCH_KNOWLEDGE_BASE_TOOL: dict[str, Any] = {
     "type": "function",
@@ -62,7 +68,26 @@ def execute_search_knowledge_base(arguments: str | dict[str, Any]) -> str:
     if not isinstance(query, str) or not query.strip():
         raise ValueError("El argumento 'query' debe ser un texto no vacío.")
 
-    results = search_knowledge_base(query=query)
+    trace = active_tool_trace()
+    origin = active_tool_origin() or "hdt4"
+    try:
+        results = search_knowledge_base(query=query)
+    except Exception as exc:
+        if trace is not None:
+            trace.completed(
+                "search_knowledge_base",
+                {"query": query},
+                error=str(exc),
+                origin=origin,
+            )
+        raise
+    if trace is not None:
+        trace.completed(
+            "search_knowledge_base",
+            {"query": query},
+            result=results,
+            origin=origin,
+        )
     return json.dumps(results, ensure_ascii=False)
 
 

@@ -10,6 +10,9 @@ import urllib.request
 import time
 import shutil
 import subprocess
+from copy import deepcopy
+from contextlib import contextmanager, nullcontext
+from contextvars import ContextVar
 from dataclasses import asdict, dataclass
 from pathlib import Path
 import unicodedata
@@ -17,6 +20,166 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(PROJECT_ROOT / ".env")
+
+
+_ACTIVE_TRACE: ContextVar["ToolCallTrace | None"] = ContextVar(
+    "parachute_active_tool_trace", default=None
+)
+_ACTIVE_TRACE_ORIGIN: ContextVar[str | None] = ContextVar(
+    "parachute_active_tool_origin", default=None
+)
+_ACTIVE_EVAL_TODAY: ContextVar[dt.date | None] = ContextVar(
+    "parachute_active_eval_today", default=None
+)
+_ACTIVE_WEATHER_FIXTURE: ContextVar[dict[str, object] | None] = ContextVar(
+    "parachute_active_weather_fixture", default=None
+)
+_ACTIVE_REQUEST_APPOINTMENTS: ContextVar[list[dict[str, object]] | None] = ContextVar(
+    "parachute_active_request_appointments", default=None
+)
+
+
+@contextmanager
+def evaluation_dependencies(
+    *,
+    today: dt.date | None = None,
+    weather_fixture: dict[str, object] | None = None,
+    weather_sequence: list[dict[str, object]] | None = None,
+):
+    """Activa dependencias simuladas de evaluación para el turno actual.
+
+    Las reglas de validación y evaluación continúan siendo las mismas; solo se
+    reemplaza la fuente meteorológica durante el contexto.
+    """
+    today_token = _ACTIVE_EVAL_TODAY.set(today)
+    weather_token = _ACTIVE_WEATHER_FIXTURE.set(
+        {
+            "fallback": deepcopy(weather_fixture),
+            "sequence": deepcopy(weather_sequence or []),
+        }
+        if weather_fixture is not None or weather_sequence is not None
+        else None
+    )
+    try:
+        yield
+    finally:
+        _ACTIVE_WEATHER_FIXTURE.reset(weather_token)
+        _ACTIVE_EVAL_TODAY.reset(today_token)
+
+
+class ToolCallTrace:
+    """Registro por ejecución de llamadas observadas durante un turno."""
+
+    def __init__(self) -> None:
+        self.tool_calls: list[dict[str, object]] = []
+        self._next_order = 1
+        self.current_origin: str | None = None
+
+    def push_origin(self, value: str) -> str | None:
+        previous = self.current_origin
+        self.current_origin = value
+        return previous
+
+    def pop_origin(self, previous: str | None) -> None:
+        self.current_origin = previous
+
+    @contextmanager
+    def activate(self):
+        token = _ACTIVE_TRACE.set(self)
+        try:
+            yield self
+        finally:
+            _ACTIVE_TRACE.reset(token)
+
+    @contextmanager
+    def origin(self, value: str):
+        token = _ACTIVE_TRACE_ORIGIN.set(value)
+        try:
+            yield
+        finally:
+            _ACTIVE_TRACE_ORIGIN.reset(token)
+
+    def start(self, name: str, arguments: object, origin: str) -> int:
+        order = self._next_order
+        self._next_order += 1
+        self.tool_calls.append(
+            {
+                "order": order,
+                "name": name,
+                "arguments": arguments,
+                "result": None,
+                "error": None,
+                "origin": origin,
+            }
+        )
+        return len(self.tool_calls) - 1
+
+    def finish(
+        self,
+        index: int,
+        *,
+        result: object = None,
+        error: str | None = None,
+    ) -> None:
+        call = self.tool_calls[index]
+        call["result"] = result
+        call["error"] = error
+
+    def fail_open_calls(self, error: str) -> None:
+        """Marca como fallidas las llamadas que no alcanzaron su callback final."""
+        for call in self.tool_calls:
+            if call["result"] is None and call["error"] is None:
+                call["error"] = error
+
+    def completed(
+        self,
+        name: str,
+        arguments: object,
+        *,
+        result: object = None,
+        error: str | None = None,
+        origin: str | None = None,
+    ) -> None:
+        index = self.start(
+            name,
+            arguments,
+            origin or _ACTIVE_TRACE_ORIGIN.get() or "hdt4",
+        )
+        self.finish(index, result=result, error=error)
+
+
+def active_tool_trace() -> ToolCallTrace | None:
+    """Devuelve el registro del turno actual, si existe."""
+    return _ACTIVE_TRACE.get()
+
+
+def active_tool_origin() -> str | None:
+    """Devuelve el agente/origen que está ejecutando la llamada actual."""
+    return _ACTIVE_TRACE_ORIGIN.get() or (
+        _ACTIVE_TRACE.get().current_origin if _ACTIVE_TRACE.get() else None
+    )
+
+
+def record_observed_call(
+    name: str,
+    arguments: object,
+    func,
+    *,
+    origin: str,
+):
+    """Ejecuta y registra una llamada observada fuera de un SDK hook."""
+    trace = active_tool_trace()
+    if trace is None:
+        return func()
+    index = trace.start(name, arguments, origin)
+    with trace.origin(origin):
+        try:
+            result = func()
+        except Exception as exc:
+            trace.finish(index, error=str(exc))
+            raise
+    trace.finish(index, result=result)
+    return result
 
 
 def agent_model():
@@ -74,7 +237,7 @@ def validate_date(date_text: str, today: dt.date | None = None) -> dt.date:
         requested = dt.date.fromisoformat(date_text)
     except ValueError as exc:
         raise ValueError("La fecha debe tener el formato YYYY-MM-DD.") from exc
-    today = today or dt.date.today()
+    today = today or _ACTIVE_EVAL_TODAY.get() or dt.date.today()
     if requested < today:
         raise ValueError("No se pueden calendarizar citas en una fecha pasada.")
     # Los 16 días de Open-Meteo incluyen el día actual: el último día es hoy + 15.
@@ -89,6 +252,33 @@ def _mean(values: list[float]) -> float | None:
 
 def fetch_weather(date_text: str) -> WeatherReport:
     requested = validate_date(date_text)
+    fixture_state = _ACTIVE_WEATHER_FIXTURE.get()
+    if fixture_state is not None:
+        sequence = fixture_state["sequence"]
+        if not isinstance(sequence, list):
+            raise RuntimeError("El estado de la secuencia meteorológica no es válido.")
+        if sequence:
+            fixture = sequence.pop(0)
+        else:
+            fixture = fixture_state["fallback"]
+        if fixture is None:
+            raise RuntimeError(
+                "La secuencia meteorológica de evaluación se agotó y no hay fixture de respaldo."
+            )
+        if not isinstance(fixture, dict):
+            raise ValueError("Cada fixture meteorológico debe ser un objeto JSON.")
+        report = WeatherReport(
+            date=date_text,
+            temperature_c=fixture.get("temperature_c"),
+            precipitation_mm=fixture.get("precipitation_mm"),
+            cloud_cover_pct=fixture.get("cloud_cover_pct"),
+            visibility_m=fixture.get("visibility_m"),
+            wind_speed_kmh=fixture.get("wind_speed_kmh"),
+            wind_gust_kmh=fixture.get("wind_gust_kmh"),
+            decision="",
+            reasons=[],
+        )
+        return evaluate_weather(report)
     params = urllib.parse.urlencode({
         "latitude": LATITUDE,
         "longitude": LONGITUDE,
@@ -247,6 +437,66 @@ def extract_date(text: str) -> str | None:
     return match.group(1) if match else None
 
 
+def _read_appointments() -> list[dict[str, object]]:
+    if not APPOINTMENTS_PATH.exists():
+        return []
+    try:
+        content = APPOINTMENTS_PATH.read_text(encoding="utf-8").strip()
+        value = json.loads(content) if content else []
+    except (OSError, json.JSONDecodeError):
+        return []
+    return value if isinstance(value, list) else []
+
+
+def _new_appointment_for_date(
+    initial: list[dict[str, object]], date: str,
+) -> bool:
+    remaining = deepcopy(initial)
+    for appointment in _read_appointments():
+        if appointment in remaining:
+            remaining.remove(appointment)
+        elif appointment.get("date") == date:
+            return True
+    return False
+
+
+def _successful_schedule_call(date: str, result: object | None = None) -> bool:
+    """Comprueba el resultado real de schedule_tool, no el texto del LLM."""
+    candidates = []
+    trace = active_tool_trace()
+    if trace is not None:
+        candidates.extend(
+            call for call in trace.tool_calls
+            if call.get("name") == "schedule_tool"
+            and call.get("error") is None
+            and isinstance(call.get("arguments"), dict)
+            and call["arguments"].get("date") == date
+        )
+    if result is not None:
+        candidates.append({"result": result})
+    for call in candidates:
+        value = call.get("result")
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                continue
+        if isinstance(value, dict) and value.get("scheduled") is True:
+            return True
+    return False
+
+
+def _calendarization_verified(
+    date: str,
+    result: object | None = None,
+    initial: list[dict[str, object]] | None = None,
+) -> bool:
+    initial = initial if initial is not None else _ACTIVE_REQUEST_APPOINTMENTS.get()
+    if initial is None:
+        initial = _read_appointments()
+    return _successful_schedule_call(date, result) and _new_appointment_for_date(initial, date)
+
+
 def _apply_calendar_guard(user_text: str, output: str) -> str:
     date = extract_date(user_text)
     lowered = user_text.lower()
@@ -259,17 +509,39 @@ def _apply_calendar_guard(user_text: str, output: str) -> str:
     )
     if not is_calendar:
         return output
+    request_initial = _ACTIVE_REQUEST_APPOINTMENTS.get()
+    if request_initial is None:
+        request_initial = _read_appointments()
     # Postcondición de seguridad: el texto del LLM nunca puede contradecir
     # el clima real consultado por la integración compartida.
-    report = fetch_weather(date)
+    report = record_observed_call(
+        "fetch_weather",
+        {"date": date},
+        lambda: fetch_weather(date),
+        origin="guard:calendar",
+    )
     metrics = (f"Temperatura: {report.temperature_c} °C; precipitación: {report.precipitation_mm} mm; "
                f"nubes: {report.cloud_cover_pct}%; visibilidad: {report.visibility_m} m; "
                f"viento: {report.wind_speed_kmh} km/h; ráfagas: {report.wind_gust_kmh} km/h.")
     if report.decision == "NO SEGURO / PROHIBIDO":
         return f"Decisión: NO SEGURO / PROHIBIDO.\n{metrics}\nLa cita no fue calendarizada. Razones: {' '.join(report.reasons)}"
     if not output.strip() or "no puedo" in output.lower() or "no dispongo" in output.lower():
-        result = json.loads(schedule_tool(date))
-        return f"{metrics}\n{result.get('message', 'Resultado de calendarización.') if result.get('scheduled') else result.get('error')}"
+        raw_result = record_observed_call(
+            "schedule_tool",
+            {"date": date},
+            lambda: schedule_tool(date),
+            origin="guard:calendar",
+        )
+        result = json.loads(raw_result)
+        if result.get("scheduled") and _calendarization_verified(date, result, request_initial):
+            return f"{metrics}\n{result.get('message', 'Resultado de calendarización.')}"
+        return f"{metrics}\nLa cita no fue calendarizada: no se pudo verificar la herramienta y la persistencia de esta solicitud."
+    if _successful_schedule_call(date) and _new_appointment_for_date(request_initial, date):
+        return output
+    if re.search(r"\b(cita|reserva)\b", output, re.IGNORECASE) and re.search(
+        r"\b(agend\w*|calendariz\w*|confirm\w*|program\w*)\b", output, re.IGNORECASE
+    ):
+        return f"{output}\nLa cita no fue confirmada: no se encontró una llamada exitosa a schedule_tool con una cita nueva persistida en esta solicitud."
     return output
 
 
@@ -283,29 +555,43 @@ def _apply_domain_guard(user_text: str, output: str) -> str:
         return output
     # HDT4 divide preguntas, consulta cada parte y genera una respuesta
     # fundamentada. No concatenamos ni reinterpretamos sus resultados.
-    return faq_tool(user_text)
+    return record_observed_call(
+        "faq_tool",
+        {"question": user_text},
+        lambda: faq_tool(user_text),
+        origin="guard:domain",
+    )
 
 
-def run_agent(agent, user_text: str) -> str:
+def run_agent(agent, user_text: str, *, run_hooks=None) -> str:
     from agents import Runner
-    try:
-        # HDT4 definía respuestas deterministas para cortesía; se conserva ese
-        # comportamiento antes de invocar al modelo de orquestación.
-        source = str(HDT4_SRC_PATH)
-        if source not in sys.path:
-            sys.path.insert(0, source)
+    request_token = _ACTIVE_REQUEST_APPOINTMENTS.set(deepcopy(_read_appointments()))
+    owned_trace = active_tool_trace() is None
+    trace_context = ToolCallTrace().activate() if owned_trace else nullcontext()
+    with trace_context:
         try:
-            from agent import get_conversational_response
-            conversational = get_conversational_response(user_text)
-        except ImportError:
-            conversational = None
-        if conversational is not None:
-            return conversational
-        output = Runner.run_sync(agent, user_text).final_output or ""
-        output = _apply_calendar_guard(user_text, output)
-        return _apply_domain_guard(user_text, output)
-    except Exception as exc:
-        return f"No se pudo completar la solicitud. Verifica el modelo y la conexión del proveedor: {exc}"
+            # HDT4 definía respuestas deterministas para cortesía; se conserva ese
+            # comportamiento antes de invocar al modelo de orquestación.
+            source = str(HDT4_SRC_PATH)
+            if source not in sys.path:
+                sys.path.insert(0, source)
+            try:
+                from agent import get_conversational_response
+                conversational = get_conversational_response(user_text)
+            except ImportError:
+                conversational = None
+            if conversational is not None:
+                return conversational
+            output = Runner.run_sync(agent, user_text, hooks=run_hooks).final_output or ""
+            output = _apply_calendar_guard(user_text, output)
+            return _apply_domain_guard(user_text, output)
+        except Exception as exc:
+            trace = active_tool_trace()
+            if trace is not None:
+                trace.fail_open_calls(str(exc))
+            return f"No se pudo completar la solicitud. Verifica el modelo y la conexión del proveedor: {exc}"
+        finally:
+            _ACTIVE_REQUEST_APPOINTMENTS.reset(request_token)
 
 
 def run_chat(agent) -> None:

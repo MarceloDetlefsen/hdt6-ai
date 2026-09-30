@@ -1,0 +1,22 @@
+description: "Evaluación de Promptfoo para Parachute S.A."
+
+prompts:
+  - "{{question}}"
+
+providers:
+  - file://provider.py
+
+# Defaults compartidos por P2 y P3. `reference` vive en cada caso y es una
+# referencia independiente de la respuesta generada por el agente.
+defaultTest:
+  assert:
+    - type: factuality
+      value: "{{reference}}"
+      provider: groq:openai/gpt-oss-20b
+    - type: latency
+      # Umbral inicial provisional para desarrollo; no es un requisito del cliente.
+      threshold: 30000
+
+# P2 y P3 mantienen sus casos separados. Estos archivos contienen solamente
+# un caso mínimo de ejemplo y deben ampliarse con sus respectivos datasets.
+tests: file://cases/*.yaml
