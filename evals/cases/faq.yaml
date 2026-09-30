@@ -1,7 +1,3 @@
-description: "Evals para FAQ mínimos (dataset inicial/provisional)"
-
-# tests for known questions
-tests:
   - vars:
       question: "¿Cuál es el peso máximo permitido para saltar?"
       reference: "El peso máximo permitido para saltar es de 100 kg."
@@ -15,7 +11,7 @@ tests:
       - type: regex
         value: '\\b100\\s*kg\\b'
       - type: javascript
-        value: file://../assertions.js:toolCallsAndAppointments
+        value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
   - vars:
       question: "¿Cuál es la edad mínima permitida para saltar?"
@@ -30,7 +26,7 @@ tests:
       - type: regex
         value: '\\b18\\s*años\\b'
       - type: javascript
-        value: file://../assertions.js:toolCallsAndAppointments
+        value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
 # tests for unknown questions
   - vars:
@@ -48,7 +44,7 @@ tests:
       - type: llm-rubric
         value: "No suena robotico y mantienen un tono respetuoso"
       - type: javascript
-        value: file://../assertions.js:toolCallsAndAppointments
+        value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
   - vars:
       question: "¿Hay parqueo disponible en el lugar del evento?"
@@ -65,7 +61,7 @@ tests:
       - type: llm-rubric
         value: "No suena robotico y mantienen un tono respetuoso"
       - type: javascript
-        value: file://../assertions.js:toolCallsAndAppointments
+        value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
 # tests for out of context questions
   - vars:
@@ -83,7 +79,7 @@ tests:
       - type: llm-rubric
         value: "No suena robotico y mantienen un tono respetuoso"
       - type: javascript
-        value: file://../assertions.js:toolCallsAndAppointments
+        value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
   - vars:
       question: "¿Te gusta el KPOP?"
@@ -100,4 +96,4 @@ tests:
       - type: llm-rubric
         value: "No suena robotico y mantienen un tono respetuoso"
       - type: javascript
-        value: file://../assertions.js:toolCallsAndAppointments
+        value: file://${configDir}/../assertions.js:toolCallsAndAppointments

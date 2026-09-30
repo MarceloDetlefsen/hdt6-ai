@@ -14,4 +14,4 @@
     - type: regex
       value: "(?i)(cita|calendariz|decisión)"
     - type: javascript
-      value: file://../assertions.js:toolCallsAndAppointments
+      value: file://${configDir}/../assertions.js:toolCallsAndAppointments
