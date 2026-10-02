@@ -179,6 +179,23 @@ python probar_todos_casos.py
 python probar_todos_casos.py --live
 ```
 
+### Evals de la arquitectura centralizada (Promptfoo)
+
+La suite de `evals/` ejecuta el supervisor centralizado mediante
+`evals/provider.py`. Las citas usan fixtures meteorológicos y almacenamiento
+temporal; las FAQs siguen usando la integración HDT4 configurada localmente.
+
+```bash
+# La ruta local evita problemas de permisos en ~/.promptfoo en entornos aislados.
+PROMPTFOO_CONFIG_DIR="$PWD/.promptfoo" npx promptfoo eval \
+  -c evals/promptfooconfig.yaml
+```
+
+La configuración ejecuta un caso a la vez y limita cada llamada del proveedor a
+60 segundos; una dependencia remota bloqueada queda reportada como error en vez
+de dejar la corrida abierta. Los asserts son deterministas (salida, traza de
+herramientas y persistencia), por lo que no añaden llamadas de un modelo juez.
+
 ---
 
 ## 6. Estructura del Repositorio

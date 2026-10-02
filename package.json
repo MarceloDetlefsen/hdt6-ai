@@ -20,6 +20,6 @@
   },
   "homepage": "https://github.com/MarceloDetlefsen/hdt6-ai#readme",
   "devDependencies": {
-    "promptfoo": "0.123.1"
+    "promptfoo": "^0.123.1"
   }
 }
