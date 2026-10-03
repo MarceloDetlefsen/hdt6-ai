@@ -209,7 +209,7 @@
     reference: "No se puede verificar el clima porque la API meteorológica falló; la cita no se calendariza."
     fixed_today: "2026-09-30"
     # La secuencia sin fixture de respaldo simula una respuesta de API inválida.
-    weather_sequence: '[{}]'
+    weather_sequence: '["simulated API failure"]'
     required_tools: '[{"name":"weather_tool","origin":"agent:WeatherWorker","error":false}]'
     forbidden_tools: '[{"name":"calendarizar_cita"},{"name":"schedule_tool"}]'
     expected_created_appointments: 0

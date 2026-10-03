@@ -1,8 +1,8 @@
 {
-  "evalId": "eval-AuE-2026-10-03T00:31:54",
+  "evalId": "eval-tV6-2026-10-03T00:56:49",
   "results": {
     "version": 3,
-    "timestamp": "2026-10-03T00:31:54.639Z",
+    "timestamp": "2026-10-03T00:56:49.817Z",
     "prompts": [
       {
         "id": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
@@ -16,7 +16,7 @@
           "testErrorCount": 0,
           "assertPassCount": 46,
           "assertFailCount": 0,
-          "totalLatencyMs": 3222,
+          "totalLatencyMs": 3282,
           "tokenUsage": {
             "prompt": 0,
             "completion": 0,
@@ -31,13 +31,13 @@
               "cacheCreationInputTokens": 0
             },
             "assertions": {
-              "total": 947,
+              "total": 949,
               "prompt": 389,
-              "completion": 558,
+              "completion": 560,
               "cached": 0,
               "numRequests": 1,
               "completionDetails": {
-                "reasoning": 459,
+                "reasoning": 460,
                 "acceptedPrediction": 0,
                 "rejectedPrediction": 0,
                 "cacheReadInputTokens": 0,
@@ -61,13 +61,13 @@
           "reason": "All assertions passed",
           "namedScores": {},
           "tokensUsed": {
-            "total": 947,
+            "total": 949,
             "prompt": 389,
-            "completion": 558,
+            "completion": 560,
             "cached": 0,
             "numRequests": 1,
             "completionDetails": {
-              "reasoning": 459,
+              "reasoning": 460,
               "acceptedPrediction": 0,
               "rejectedPrediction": 0,
               "cacheReadInputTokens": 0,
@@ -91,15 +91,15 @@
               },
               "pass": true,
               "score": 1,
-              "reason": "The submitted answer contains only information that is also present in the expert answer: the appointment is tentatively scheduled and the instructor’s confirmation is pending. It omits the additional details about the date being valid and the weather being IDEAL, but it does not add any new or contradictory facts. Therefore, the submitted answer is a subset of the expert answer and fully consistent with it.",
+              "reason": "The submitted answer contains only information that is also present in the expert answer: the appointment is tentatively scheduled and it is pending confirmation from the instructor. It omits the additional details about the date being valid and the weather being IDEAL, but it does not add any new or contradictory information. Therefore, the submitted answer is a subset of the expert answer and fully consistent with it.",
               "tokensUsed": {
-                "total": 947,
+                "total": 949,
                 "prompt": 389,
-                "completion": 558,
+                "completion": 560,
                 "cached": 0,
                 "numRequests": 1,
                 "completionDetails": {
-                  "reasoning": 459
+                  "reasoning": 460
                 }
               },
               "metadata": {
@@ -126,8 +126,8 @@
             }
           ]
         },
-        "id": "7dc35f72-aa97-4fab-8a1d-d147cffb11e8",
-        "latencyMs": 3024,
+        "id": "9d03e3c4-cd77-49ec-91cc-39d4225cf4c5",
+        "latencyMs": 3081,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero calendarizar una cita el 2026-10-01",
@@ -283,13 +283,13 @@
             "cacheCreationInputTokens": 0
           },
           "assertions": {
-            "total": 947,
+            "total": 949,
             "prompt": 389,
-            "completion": 558,
+            "completion": 560,
             "cached": 0,
             "numRequests": 1,
             "completionDetails": {
-              "reasoning": 459,
+              "reasoning": 460,
               "acceptedPrediction": 0,
               "rejectedPrediction": 0,
               "cacheReadInputTokens": 0,
@@ -439,8 +439,8 @@
             }
           ]
         },
-        "id": "1445ae3b-bc28-43e7-9d5a-0aea2e70b071",
-        "latencyMs": 16,
+        "id": "f5862954-b59f-467e-bd20-87dc4a4a7540",
+        "latencyMs": 24,
         "namedScores": {},
         "prompt": {
           "raw": "Necesito agendar una cita para el 2026-10-02",
@@ -748,8 +748,8 @@
             }
           ]
         },
-        "id": "e221b6cf-448e-4fa1-aee4-d15ab9250ccc",
-        "latencyMs": 13,
+        "id": "bdc762d8-5ab4-4259-9c80-25ac266154d1",
+        "latencyMs": 15,
         "namedScores": {},
         "prompt": {
           "raw": "Agendar cita el 2026-10-03",
@@ -1057,8 +1057,8 @@
             }
           ]
         },
-        "id": "8a8e0cf4-6574-4732-8914-43d7ff8f4b22",
-        "latencyMs": 13,
+        "id": "ca89984b-389b-4fd0-8136-195d8de755ad",
+        "latencyMs": 14,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero reservar una cita el 2026-10-04",
@@ -1366,7 +1366,7 @@
             }
           ]
         },
-        "id": "28abee6d-808d-4426-9912-2c9a8c626af6",
+        "id": "30b7a13a-847a-469d-a151-4beb003ef418",
         "latencyMs": 13,
         "namedScores": {},
         "prompt": {
@@ -1675,8 +1675,8 @@
             }
           ]
         },
-        "id": "2934b770-300c-4aac-83ca-d8241d256055",
-        "latencyMs": 14,
+        "id": "2056b165-09b8-4097-a9af-bffc6997040d",
+        "latencyMs": 13,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero agendar una cita el 2026-10-06",
@@ -1984,8 +1984,8 @@
             }
           ]
         },
-        "id": "5cb55a3e-02ea-4320-8e94-9d0e8f75c0fa",
-        "latencyMs": 19,
+        "id": "f7837128-7d57-44fd-ab65-4fd330494dc8",
+        "latencyMs": 20,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero calendarizar una cita el 2026-10-07",
@@ -2179,7 +2179,7 @@
             }
           ]
         },
-        "id": "5bf73b49-1f14-4057-b987-9374eddc82e2",
+        "id": "42b2f35b-811e-47b1-9a14-92b35eaaf708",
         "latencyMs": 19,
         "namedScores": {},
         "prompt": {
@@ -2374,8 +2374,8 @@
             }
           ]
         },
-        "id": "a0e7dc43-3ca9-40ed-bfdd-6e0e40c4851c",
-        "latencyMs": 13,
+        "id": "f0ab3175-755c-4ae2-9be0-8b667d969262",
+        "latencyMs": 11,
         "namedScores": {},
         "prompt": {
           "raw": "Reservar una cita el 2026-10-09",
@@ -2569,8 +2569,8 @@
             }
           ]
         },
-        "id": "49c831fd-e345-4982-aa40-5577c3d12360",
-        "latencyMs": 11,
+        "id": "0c2b6d83-ea79-422f-90f9-5970a760ef2c",
+        "latencyMs": 13,
         "namedScores": {},
         "prompt": {
           "raw": "Calendarizar una cita el 2026-10-10",
@@ -2764,8 +2764,8 @@
             }
           ]
         },
-        "id": "e2364f89-586f-4bea-8e87-09c5b670a4d8",
-        "latencyMs": 12,
+        "id": "79552247-e585-45af-87f0-6af94e6b28a7",
+        "latencyMs": 13,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero calendarizar una cita hoy, el 2026-10-02",
@@ -3073,8 +3073,8 @@
             }
           ]
         },
-        "id": "249822ec-28d8-4c00-8ec8-fb4d4e415c2c",
-        "latencyMs": 14,
+        "id": "b56e9338-b1d5-469a-b1e9-6ae838a76551",
+        "latencyMs": 11,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero agendar una cita el 2026-10-01",
@@ -3224,8 +3224,8 @@
             }
           ]
         },
-        "id": "535609ed-edd8-4fdf-8cf0-8b080dbb1017",
-        "latencyMs": 13,
+        "id": "e966bb49-041e-440e-bd8d-2810bb23974e",
+        "latencyMs": 11,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero reservar una cita el 2026-10-18",
@@ -3375,8 +3375,8 @@
             }
           ]
         },
-        "id": "4065c5af-e7e0-4ff0-99d0-ad3883e5c94b",
-        "latencyMs": 13,
+        "id": "14ddfb3f-ffcc-46f9-bccf-7466ce686890",
+        "latencyMs": 12,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero calendarizar una cita el 2026-99-99",
@@ -3526,8 +3526,8 @@
             }
           ]
         },
-        "id": "18f9a7e8-fb59-4c9e-acd4-6110bb4b139a",
-        "latencyMs": 15,
+        "id": "9e13eb0e-1218-4b89-a578-15a9e020b51b",
+        "latencyMs": 12,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero agendar una cita el 2026-10-11",
@@ -3543,7 +3543,7 @@
           "label": ""
         },
         "response": {
-          "output": "Decisión: NO SEGURO / PROHIBIDO. La cita no fue calendarizada.",
+          "output": "La cita no fue calendarizada: no se pudo verificar el clima. Error: Cada fixture meteorológico debe ser un objeto JSON.",
           "metadata": {
             "tool_calls": [
               {
@@ -3552,7 +3552,7 @@
                 "arguments": {
                   "input": "2026-10-11"
                 },
-                "result": "{\"date\": \"2026-10-11\", \"temperature_c\": null, \"precipitation_mm\": null, \"cloud_cover_pct\": null, \"visibility_m\": null, \"wind_speed_kmh\": null, \"wind_gust_kmh\": null, \"decision\": \"NO SEGURO / PROHIBIDO\", \"reasons\": [\"Faltan datos meteorológicos para autorizar el salto.\"]}",
+                "result": "{\"error\": \"Cada fixture meteorológico debe ser un objeto JSON.\"}",
                 "error": null,
                 "origin": "agent:SupervisorCentral"
               },
@@ -3562,7 +3562,7 @@
                 "arguments": {
                   "date": "2026-10-11"
                 },
-                "result": "{\"date\": \"2026-10-11\", \"temperature_c\": null, \"precipitation_mm\": null, \"cloud_cover_pct\": null, \"visibility_m\": null, \"wind_speed_kmh\": null, \"wind_gust_kmh\": null, \"decision\": \"NO SEGURO / PROHIBIDO\", \"reasons\": [\"Faltan datos meteorológicos para autorizar el salto.\"]}",
+                "result": "{\"error\": \"Cada fixture meteorológico debe ser un objeto JSON.\"}",
                 "error": null,
                 "origin": "agent:WeatherWorker"
               }
@@ -3583,7 +3583,7 @@
             "question": "Quiero agendar una cita el 2026-10-11",
             "reference": "No se puede verificar el clima porque la API meteorológica falló; la cita no se calendariza.",
             "fixed_today": "2026-09-30",
-            "weather_sequence": "[{}]",
+            "weather_sequence": "[\"simulated API failure\"]",
             "required_tools": "[{\"name\":\"weather_tool\",\"origin\":\"agent:WeatherWorker\",\"error\":false}]",
             "forbidden_tools": "[{\"name\":\"calendarizar_cita\"},{\"name\":\"schedule_tool\"}]",
             "expected_created_appointments": 0
@@ -3640,7 +3640,7 @@
           "question": "Quiero agendar una cita el 2026-10-11",
           "reference": "No se puede verificar el clima porque la API meteorológica falló; la cita no se calendariza.",
           "fixed_today": "2026-09-30",
-          "weather_sequence": "[{}]",
+          "weather_sequence": "[\"simulated API failure\"]",
           "required_tools": "[{\"name\":\"weather_tool\",\"origin\":\"agent:WeatherWorker\",\"error\":false}]",
           "forbidden_tools": "[{\"name\":\"calendarizar_cita\"},{\"name\":\"schedule_tool\"}]",
           "expected_created_appointments": 0
@@ -3653,7 +3653,7 @@
               "arguments": {
                 "input": "2026-10-11"
               },
-              "result": "{\"date\": \"2026-10-11\", \"temperature_c\": null, \"precipitation_mm\": null, \"cloud_cover_pct\": null, \"visibility_m\": null, \"wind_speed_kmh\": null, \"wind_gust_kmh\": null, \"decision\": \"NO SEGURO / PROHIBIDO\", \"reasons\": [\"Faltan datos meteorológicos para autorizar el salto.\"]}",
+              "result": "{\"error\": \"Cada fixture meteorológico debe ser un objeto JSON.\"}",
               "error": null,
               "origin": "agent:SupervisorCentral"
             },
@@ -3663,7 +3663,7 @@
               "arguments": {
                 "date": "2026-10-11"
               },
-              "result": "{\"date\": \"2026-10-11\", \"temperature_c\": null, \"precipitation_mm\": null, \"cloud_cover_pct\": null, \"visibility_m\": null, \"wind_speed_kmh\": null, \"wind_gust_kmh\": null, \"decision\": \"NO SEGURO / PROHIBIDO\", \"reasons\": [\"Faltan datos meteorológicos para autorizar el salto.\"]}",
+              "result": "{\"error\": \"Cada fixture meteorológico debe ser un objeto JSON.\"}",
               "error": null,
               "origin": "agent:WeatherWorker"
             }
@@ -3696,13 +3696,13 @@
           "cacheCreationInputTokens": 0
         },
         "assertions": {
-          "total": 947,
+          "total": 949,
           "prompt": 389,
-          "completion": 558,
+          "completion": 560,
           "cached": 0,
           "numRequests": 1,
           "completionDetails": {
-            "reasoning": 459,
+            "reasoning": 460,
             "acceptedPrediction": 0,
             "rejectedPrediction": 0,
             "cacheReadInputTokens": 0,
@@ -3710,8 +3710,8 @@
           }
         }
       },
-      "durationMs": 7971,
-      "evaluationDurationMs": 7971
+      "durationMs": 7857,
+      "evaluationDurationMs": 7857
     }
   },
   "config": {
@@ -4038,7 +4038,7 @@
           "question": "Quiero agendar una cita el 2026-10-11",
           "reference": "No se puede verificar el clima porque la API meteorológica falló; la cita no se calendariza.",
           "fixed_today": "2026-09-30",
-          "weather_sequence": "[{}]",
+          "weather_sequence": "[\"simulated API failure\"]",
           "required_tools": "[{\"name\":\"weather_tool\",\"origin\":\"agent:WeatherWorker\",\"error\":false}]",
           "forbidden_tools": "[{\"name\":\"calendarizar_cita\"},{\"name\":\"schedule_tool\"}]",
           "expected_created_appointments": 0
@@ -4077,8 +4077,8 @@
     "metadata": {},
     "evaluateOptions": {
       "maxConcurrency": 1,
-      "timeoutMs": 180000,
-      "maxEvalTimeMs": 720000,
+      "timeoutMs": 65000,
+      "maxEvalTimeMs": 480000,
       "cache": false
     }
   },
@@ -4088,8 +4088,8 @@
     "nodeVersion": "v26.10.0",
     "platform": "linux",
     "arch": "x64",
-    "exportedAt": "2026-10-03T00:32:03.248Z",
-    "evaluationCreatedAt": "2026-10-03T00:31:54.639Z"
+    "exportedAt": "2026-10-03T00:56:58.303Z",
+    "evaluationCreatedAt": "2026-10-03T00:56:49.817Z"
   },
   "vars": [
     "question",
@@ -4104,8 +4104,8 @@
   "runtimeOptions": {
     "eventSource": "cli",
     "maxConcurrency": 1,
-    "timeoutMs": 180000,
-    "maxEvalTimeMs": 720000,
+    "timeoutMs": 65000,
+    "maxEvalTimeMs": 480000,
     "cache": false,
     "showProgressBar": true,
     "repeat": 1

@@ -11,8 +11,8 @@ providers:
 
 evaluateOptions:
   maxConcurrency: 1
-  timeoutMs: 180000
-  maxEvalTimeMs: 720000
+  timeoutMs: 65000
+  maxEvalTimeMs: 480000
   cache: false
 
 defaultTest:
