@@ -17,10 +17,10 @@ evaluateOptions:
 
 defaultTest:
   merge: true
-  options:
-    provider: groq:openai/gpt-oss-20b
   assert:
     - type: latency
       threshold: 60000
+    - type: javascript
+      value: file://${configDir}/../assertions.js:factualAppointmentResponse
 
 tests: file://cases/appointments.yaml

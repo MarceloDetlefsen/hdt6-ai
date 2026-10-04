@@ -111,4 +111,31 @@ function toolCallsAndAppointments(output, context = {}) {
   return pass(`Evidencia válida: ${calls.length} llamadas y ${created.length} citas creadas.`);
 }
 
-module.exports = { toolCallsAndAppointments };
+function factualAppointmentResponse(output, context = {}) {
+  const metadata = context.providerResponse?.metadata || context.metadata;
+  const reference = String(context.vars?.reference || "").toLowerCase();
+  const text = String(output || "").toLowerCase();
+
+  if (!metadata?.appointments || !Array.isArray(metadata.appointments.created)) {
+    return fail("Falta evidencia de persistencia para comprobar la factualidad de la cita.");
+  }
+
+  const referenceRejects = /no se calendariza|no se puede|no fue calendarizada/.test(reference);
+  const persisted = metadata.appointments.created.length > 0;
+  const outputRejects = /no se calendariz|no fue calendariz|no se pudo|no se pueden/.test(text);
+  const outputConfirms = hasPositiveAppointmentConfirmation(output);
+
+  if (referenceRejects === persisted) {
+    return fail("La referencia factual y la evidencia de persistencia describen resultados opuestos.");
+  }
+  if (persisted && (!outputConfirms || outputRejects)) {
+    return fail("La cita fue persistida, pero la respuesta no la confirma de forma factual.");
+  }
+  if (!persisted && (!outputRejects || outputConfirms)) {
+    return fail("La cita no fue persistida, pero la respuesta no comunica el rechazo factual.");
+  }
+
+  return pass(`Factualidad comprobada contra referencia y persistencia: ${persisted ? "cita creada" : "cita rechazada"}.`);
+}
+
+module.exports = { factualAppointmentResponse, toolCallsAndAppointments };

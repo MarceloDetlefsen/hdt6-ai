@@ -10,8 +10,6 @@
     required_tools: '[{"name":"weather_tool","origin":"agent:WeatherWorker","error":false},{"name":"schedule_tool","origin":"agent:CalendarWorker","error":false}]'
     expected_created_appointments: 1
   assert:
-    - type: factuality
-      value: "{{reference}}"
     - type: regex
       value: '(IDEAL|calendariz|cita)'
     - type: javascript

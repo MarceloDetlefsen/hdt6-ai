@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-const { toolCallsAndAppointments } = require("./assertions.js");
+const { factualAppointmentResponse, toolCallsAndAppointments } = require("./assertions.js");
 
 function context(metadata, vars = {}) {
   return { providerResponse: { metadata }, vars };
@@ -65,4 +65,22 @@ test("falla si no existe evidencia de herramientas", () => {
   const result = toolCallsAndAppointments("La cita fue calendarizada.", context({ appointments: { created: [] } }));
   assert.equal(result.pass, false);
   assert.match(result.reason, /metadata.tool_calls/);
+});
+
+test("comprueba factualidad de una cita persistida sin juez remoto", () => {
+  const result = factualAppointmentResponse(
+    "La cita fue calendarizada tentativamente.",
+    context(validMetadata, { reference: "La cita se calendariza tentativamente." }),
+  );
+  assert.equal(result.pass, true);
+});
+
+test("falla si una cita rechazada se presenta como confirmada", () => {
+  const metadata = { ...validMetadata, appointments: { initial: [], final: [], created: [] } };
+  const result = factualAppointmentResponse(
+    "La cita fue calendarizada.",
+    context(metadata, { reference: "La cita no se calendariza porque el clima es inseguro." }),
+  );
+  assert.equal(result.pass, false);
+  assert.match(result.reason, /no fue persistida/);
 });

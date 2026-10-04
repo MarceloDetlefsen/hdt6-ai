@@ -1,8 +1,8 @@
 {
-  "evalId": "eval-tV6-2026-10-03T00:56:49",
+  "evalId": "eval-TKj-2026-10-03T23:49:36",
   "results": {
     "version": 3,
-    "timestamp": "2026-10-03T00:56:49.817Z",
+    "timestamp": "2026-10-03T23:49:36.498Z",
     "prompts": [
       {
         "id": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
@@ -14,9 +14,9 @@
           "testPassCount": 15,
           "testFailCount": 0,
           "testErrorCount": 0,
-          "assertPassCount": 46,
+          "assertPassCount": 60,
           "assertFailCount": 0,
-          "totalLatencyMs": 3282,
+          "totalLatencyMs": 3245,
           "tokenUsage": {
             "prompt": 0,
             "completion": 0,
@@ -31,13 +31,13 @@
               "cacheCreationInputTokens": 0
             },
             "assertions": {
-              "total": 949,
-              "prompt": 389,
-              "completion": 560,
+              "total": 0,
+              "prompt": 0,
+              "completion": 0,
               "cached": 0,
-              "numRequests": 1,
+              "numRequests": 0,
               "completionDetails": {
-                "reasoning": 460,
+                "reasoning": 0,
                 "acceptedPrediction": 0,
                 "rejectedPrediction": 0,
                 "cacheReadInputTokens": 0,
@@ -61,18 +61,11 @@
           "reason": "All assertions passed",
           "namedScores": {},
           "tokensUsed": {
-            "total": 949,
-            "prompt": 389,
-            "completion": 560,
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
             "cached": 0,
-            "numRequests": 1,
-            "completionDetails": {
-              "reasoning": 460,
-              "acceptedPrediction": 0,
-              "rejectedPrediction": 0,
-              "cacheReadInputTokens": 0,
-              "cacheCreationInputTokens": 0
-            }
+            "numRequests": 0
           },
           "componentResults": [
             {
@@ -85,25 +78,12 @@
               }
             },
             {
-              "assertion": {
-                "type": "factuality",
-                "value": "{{reference}}"
-              },
               "pass": true,
               "score": 1,
-              "reason": "The submitted answer contains only information that is also present in the expert answer: the appointment is tentatively scheduled and it is pending confirmation from the instructor. It omits the additional details about the date being valid and the weather being IDEAL, but it does not add any new or contradictory information. Therefore, the submitted answer is a subset of the expert answer and fully consistent with it.",
-              "tokensUsed": {
-                "total": 949,
-                "prompt": 389,
-                "completion": 560,
-                "cached": 0,
-                "numRequests": 1,
-                "completionDetails": {
-                  "reasoning": 460
-                }
-              },
-              "metadata": {
-                "renderedAssertionValue": "La cita se calendariza tentativamente porque la fecha es válida y el clima es IDEAL; queda pendiente de confirmación del instructor."
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita creada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
               }
             },
             {
@@ -126,15 +106,13 @@
             }
           ]
         },
-        "id": "9d03e3c4-cd77-49ec-91cc-39d4225cf4c5",
-        "latencyMs": 3081,
+        "id": "58f7afb9-4909-4035-a9bc-597a67a4c386",
+        "latencyMs": 3058,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero calendarizar una cita el 2026-10-01",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -251,8 +229,8 @@
               "threshold": 60000
             },
             {
-              "type": "factuality",
-              "value": "{{reference}}"
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
             },
             {
               "type": "regex",
@@ -263,9 +241,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 0,
@@ -283,13 +259,13 @@
             "cacheCreationInputTokens": 0
           },
           "assertions": {
-            "total": 949,
-            "prompt": 389,
-            "completion": 560,
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
             "cached": 0,
-            "numRequests": 1,
+            "numRequests": 0,
             "completionDetails": {
-              "reasoning": 460,
+              "reasoning": 0,
               "acceptedPrediction": 0,
               "rejectedPrediction": 0,
               "cacheReadInputTokens": 0,
@@ -422,6 +398,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita creada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -439,15 +424,13 @@
             }
           ]
         },
-        "id": "f5862954-b59f-467e-bd20-87dc4a4a7540",
-        "latencyMs": 24,
+        "id": "2b0f40ac-f430-4b62-a84d-2a68e1219963",
+        "latencyMs": 13,
         "namedScores": {},
         "prompt": {
           "raw": "Necesito agendar una cita para el 2026-10-02",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -564,6 +547,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(MARGINAL|calendariz|cita)"
             },
@@ -572,9 +559,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 1,
@@ -731,6 +716,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita creada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -748,15 +742,13 @@
             }
           ]
         },
-        "id": "bdc762d8-5ab4-4259-9c80-25ac266154d1",
-        "latencyMs": 15,
+        "id": "b5f5d56f-f26e-46e8-97ba-18ceda1ee923",
+        "latencyMs": 13,
         "namedScores": {},
         "prompt": {
           "raw": "Agendar cita el 2026-10-03",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -873,6 +865,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(MARGINAL|20 km/h|calendariz)"
             },
@@ -881,9 +877,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 2,
@@ -1040,6 +1034,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita creada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -1057,15 +1060,13 @@
             }
           ]
         },
-        "id": "ca89984b-389b-4fd0-8136-195d8de755ad",
-        "latencyMs": 14,
+        "id": "e0875231-1022-4dd2-bab5-25a4addb626a",
+        "latencyMs": 13,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero reservar una cita el 2026-10-04",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -1182,6 +1183,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(MARGINAL|28 km/h|calendariz)"
             },
@@ -1190,9 +1195,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 3,
@@ -1349,6 +1352,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita creada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -1366,15 +1378,13 @@
             }
           ]
         },
-        "id": "30b7a13a-847a-469d-a151-4beb003ef418",
+        "id": "f79121bb-91d0-4e35-adaf-4f145e124c92",
         "latencyMs": 13,
         "namedScores": {},
         "prompt": {
           "raw": "Calendariza una cita el 2026-10-05",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -1491,6 +1501,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(MARGINAL|30%|calendariz)"
             },
@@ -1499,9 +1513,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 4,
@@ -1658,6 +1670,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita creada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -1675,15 +1696,13 @@
             }
           ]
         },
-        "id": "2056b165-09b8-4097-a9af-bffc6997040d",
-        "latencyMs": 13,
+        "id": "957e548a-4fca-43fa-9645-3cea56c6956b",
+        "latencyMs": 12,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero agendar una cita el 2026-10-06",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -1800,6 +1819,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(MARGINAL|75%|calendariz)"
             },
@@ -1808,9 +1831,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 5,
@@ -1967,6 +1988,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita rechazada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -1984,15 +2014,13 @@
             }
           ]
         },
-        "id": "f7837128-7d57-44fd-ab65-4fd330494dc8",
-        "latencyMs": 20,
+        "id": "64b4b933-5e6c-4df5-a4fa-b43171bf9ead",
+        "latencyMs": 13,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero calendarizar una cita el 2026-10-07",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -2052,6 +2080,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(NO SEGURO|PROHIBIDO|no fue calendarizada)"
             },
@@ -2060,9 +2092,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 6,
@@ -2162,6 +2192,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita rechazada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -2179,15 +2218,13 @@
             }
           ]
         },
-        "id": "42b2f35b-811e-47b1-9a14-92b35eaaf708",
-        "latencyMs": 19,
+        "id": "43f3d83c-3fb2-4ec0-bdae-e4c9715b3790",
+        "latencyMs": 11,
         "namedScores": {},
         "prompt": {
           "raw": "Agendar una cita el 2026-10-08",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -2247,6 +2284,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(NO SEGURO|PROHIBIDO|no fue calendarizada)"
             },
@@ -2255,9 +2296,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 7,
@@ -2357,6 +2396,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita rechazada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -2374,15 +2422,13 @@
             }
           ]
         },
-        "id": "f0ab3175-755c-4ae2-9be0-8b667d969262",
-        "latencyMs": 11,
+        "id": "292ca1f4-6df8-4e92-b1eb-150c0672a97f",
+        "latencyMs": 12,
         "namedScores": {},
         "prompt": {
           "raw": "Reservar una cita el 2026-10-09",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -2442,6 +2488,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(NO SEGURO|PROHIBIDO|precipit|no fue calendarizada)"
             },
@@ -2450,9 +2500,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 8,
@@ -2552,6 +2600,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita rechazada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -2569,15 +2626,13 @@
             }
           ]
         },
-        "id": "0c2b6d83-ea79-422f-90f9-5970a760ef2c",
-        "latencyMs": 13,
+        "id": "c3e4fae2-8d00-4c6a-bc40-1875a864b63e",
+        "latencyMs": 11,
         "namedScores": {},
         "prompt": {
           "raw": "Calendarizar una cita el 2026-10-10",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -2637,6 +2692,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(NO SEGURO|PROHIBIDO|nubes|no fue calendarizada)"
             },
@@ -2645,9 +2704,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 9,
@@ -2747,6 +2804,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita creada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -2764,15 +2830,13 @@
             }
           ]
         },
-        "id": "79552247-e585-45af-87f0-6af94e6b28a7",
-        "latencyMs": 13,
+        "id": "663f3e95-ea5a-45a5-95a4-6119ba0dc05c",
+        "latencyMs": 12,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero calendarizar una cita hoy, el 2026-10-02",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -2889,6 +2953,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(IDEAL|calendariz|cita)"
             },
@@ -2897,9 +2965,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 10,
@@ -3056,6 +3122,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita rechazada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -3073,15 +3148,13 @@
             }
           ]
         },
-        "id": "b56e9338-b1d5-469a-b1e9-6ae838a76551",
-        "latencyMs": 11,
+        "id": "d6700747-90c2-4402-aa9d-3a9643cf48ec",
+        "latencyMs": 20,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero agendar una cita el 2026-10-01",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -3119,6 +3192,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(pasada|pasó|no se pueden|no fue calendarizada|fecha)"
             },
@@ -3127,9 +3204,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 11,
@@ -3207,6 +3282,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita rechazada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -3224,15 +3308,13 @@
             }
           ]
         },
-        "id": "e966bb49-041e-440e-bd8d-2810bb23974e",
-        "latencyMs": 11,
+        "id": "97594c09-e411-453d-a87f-c702f1c59f1a",
+        "latencyMs": 18,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero reservar una cita el 2026-10-18",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -3270,6 +3352,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(16 días|próximos|fuera|no se puede|no fue calendarizada)"
             },
@@ -3278,9 +3364,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 12,
@@ -3358,6 +3442,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita rechazada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -3375,15 +3468,13 @@
             }
           ]
         },
-        "id": "14ddfb3f-ffcc-46f9-bccf-7466ce686890",
+        "id": "9b17cf62-4aab-4092-b938-eec0b03a9e43",
         "latencyMs": 12,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero calendarizar una cita el 2026-99-99",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -3421,6 +3512,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(fecha|formato|inválid|no fue calendarizada)"
             },
@@ -3429,9 +3524,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 13,
@@ -3509,6 +3602,15 @@
             {
               "pass": true,
               "score": 1,
+              "reason": "Factualidad comprobada contra referencia y persistencia: cita rechazada.",
+              "assertion": {
+                "type": "javascript",
+                "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+              }
+            },
+            {
+              "pass": true,
+              "score": 1,
               "reason": "Assertion passed",
               "assertion": {
                 "type": "regex",
@@ -3526,15 +3628,13 @@
             }
           ]
         },
-        "id": "9e13eb0e-1218-4b89-a578-15a9e020b51b",
-        "latencyMs": 12,
+        "id": "cd05728f-8845-402a-935f-72faeefb1f68",
+        "latencyMs": 14,
         "namedScores": {},
         "prompt": {
           "raw": "Quiero agendar una cita el 2026-10-11",
           "label": "{{question}}",
-          "config": {
-            "provider": "groq:openai/gpt-oss-20b"
-          }
+          "config": {}
         },
         "promptId": "d3bcaf71c11c2678899be04d872718325f0916b3b0705e805ee29930663a42e2",
         "promptIdx": 0,
@@ -3594,6 +3694,10 @@
               "threshold": 60000
             },
             {
+              "type": "javascript",
+              "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
+            },
+            {
               "type": "regex",
               "value": "(Error|error|No se pudo|no se pudo|no se puede|no fue calendarizada|verificar)"
             },
@@ -3602,9 +3706,7 @@
               "value": "file://${configDir}/../assertions.js:toolCallsAndAppointments"
             }
           ],
-          "options": {
-            "provider": "groq:openai/gpt-oss-20b"
-          },
+          "options": {},
           "metadata": {}
         },
         "testIdx": 14,
@@ -3696,13 +3798,13 @@
           "cacheCreationInputTokens": 0
         },
         "assertions": {
-          "total": 949,
-          "prompt": 389,
-          "completion": 560,
+          "total": 0,
+          "prompt": 0,
+          "completion": 0,
           "cached": 0,
-          "numRequests": 1,
+          "numRequests": 0,
           "completionDetails": {
-            "reasoning": 460,
+            "reasoning": 0,
             "acceptedPrediction": 0,
             "rejectedPrediction": 0,
             "cacheReadInputTokens": 0,
@@ -3710,8 +3812,8 @@
           }
         }
       },
-      "durationMs": 7857,
-      "evaluationDurationMs": 7857
+      "durationMs": 3801,
+      "evaluationDurationMs": 3801
     }
   },
   "config": {
@@ -3741,10 +3843,6 @@
           "expected_created_appointments": 1
         },
         "assert": [
-          {
-            "type": "factuality",
-            "value": "{{reference}}"
-          },
           {
             "type": "regex",
             "value": "(IDEAL|calendariz|cita)"
@@ -4058,16 +4156,18 @@
     "env": {},
     "defaultTest": {
       "merge": true,
-      "options": {
-        "provider": "groq:openai/gpt-oss-20b"
-      },
       "assert": [
         {
           "type": "latency",
           "threshold": 60000
+        },
+        {
+          "type": "javascript",
+          "value": "file://${configDir}/../assertions.js:factualAppointmentResponse"
         }
       ],
       "vars": {},
+      "options": {},
       "metadata": {}
     },
     "outputPath": [
@@ -4088,8 +4188,8 @@
     "nodeVersion": "v26.10.0",
     "platform": "linux",
     "arch": "x64",
-    "exportedAt": "2026-10-03T00:56:58.303Z",
-    "evaluationCreatedAt": "2026-10-03T00:56:49.817Z"
+    "exportedAt": "2026-10-03T23:49:40.982Z",
+    "evaluationCreatedAt": "2026-10-03T23:49:36.498Z"
   },
   "vars": [
     "question",
