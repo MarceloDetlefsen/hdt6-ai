@@ -1,386 +1,341 @@
 # Hoja de Trabajo 6 - Evals
 
-Evaluación del sistema de agentes desarrollado para Parachute S.A. utilizando
-[Promptfoo](https://www.promptfoo.dev/).
-
-## Objetivo
-
-El sistema desarrollado para Parachute S.A. tiene dos funcionalidades
-principales:
-
-1. Resolver preguntas frecuentes.
-2. Agendar citas tomando en cuenta las condiciones meteorológicas.
-
-Para evaluar ambas funcionalidades se implementaron evaluaciones con Promptfoo
-que cubren los cuatro criterios solicitados:
-
-- factuality;
-- evaluaciones determinísticas (`icontains` y `regex`);
-- latencia;
-- tool execution.
-
-La estrategia separa las evaluaciones determinísticas de las evaluaciones que
-requieren un LLM como juez. Esto permite obtener resultados reproducibles sin
-que las restricciones del proveedor LLM afecten innecesariamente toda la suite.
+Evaluación del sistema de asistencia conversacional desarrollado para **Parachute S.A.** utilizando [Promptfoo](https://www.promptfoo.dev/).
 
 ---
 
-# Estructura de los evals
+## 1. Objetivo y Alcance
 
-Los archivos principales se encuentran organizados de la siguiente manera:
+El sistema de Parachute S.A. posee dos funcionalidades esenciales de negocio:
+
+1. **Resolver preguntas frecuentes (FAQs):** Información sobre peso máximo, edad mínima, políticas de cancelación, alimentos y servicios generales mediante la base de conocimientos oficial.
+2. **Agendamiento seguro de citas:** Calendarización sujeta a condiciones meteorológicas en tiempo real (Open-Meteo), ventana máxima de pronóstico de 16 días y reglas estrictas de seguridad aeronáutica (viento, ráfagas, precipitación y nubosidad).
+
+Como etapa previa a su puesta en producción y para soportar futuras iteraciones de producto, se implementaron evaluaciones rigurosas con Promptfoo cubriendo los cuatro criterios clave solicitados:
+
+- **Factuality:** Fidelidad factual evaluada mediante un modelo LLM como juez (`factuality`).
+- **Evaluaciones determinísticas:** Validaciones exactas con `icontains` y expresiones regulares (`regex`) con tolerancia a variaciones de formato.
+- **Latencia:** Control estricto de tiempo de respuesta mediante aserciones de `latency` con umbral de 60 segundos sin uso de caché.
+- **Tool execution:** Verificación de herramientas ejecutadas (obligatorias y prohibidas) a través de la traza observable, validando además la persistencia real de citas en disco.
+
+---
+
+## 2. Estructura de los Evals
+
+Los archivos del módulo de evaluación se organizan de la siguiente manera:
 
 ```text
 hdt6-ai/
-├── README.md
-├── assertions.js
-├── assertions.test.js
-├── reporte-faq.json
-├── reporte-p3.json
-├── reporte-factuality.json
+├── README.md                          # Documentación general del repositorio
+├── assertions.js                      # Validador JavaScript para tools y persistencia
+├── assertions.test.js                 # Pruebas unitarias de las aserciones JS
+├── reporte-evals.json                 # Reporte principal de la suite unificada (21 casos)
+├── reporte-factuality.json            # Reporte de la suite de factuality (2 casos)
 │
 └── evals/
-    ├── provider.py
-    ├── provider_p3.py
-    ├── promptfooconfig.yaml
-    ├── promptfooconfig-faq.yaml
-    ├── promptfooconfig-p3.yaml
-    ├── promptfooconfig-factuality.yaml
-    │
+    ├── README.md                      # Esta guía técnica detallada
+    ├── promptfooconfig.yaml           # Configuración principal unificada (21 casos)
+    ├── promptfooconfig-faq.yaml       # Configuración modular: solo FAQs (6 casos)
+    ├── promptfooconfig-p3.yaml        # Configuración modular: solo Citas (15 casos)
+    ├── promptfooconfig-factuality.yaml# Configuración de factuality con LLM judge (2 casos)
+    ├── provider_combined.py           # Router de providers para la suite principal
+    ├── provider.py                    # Provider que ejecuta el agente supervisor real
+    ├── provider_p3.py                 # Provider determinista para reglas meteorológicas
+    ├── reporte-p3.json                # Reporte generado de la ejecución modular P3
     └── cases/
-        ├── faq.yaml
-        └── appointments.yaml
+        ├── faq.yaml                   # Definición de los 6 casos de prueba de FAQs
+        └── appointments.yaml          # Definición de los 15 casos de calendarización
 ```
 
-Las tres suites utilizadas como evidencia principal son:
+### Organización de las Suites
 
-| Suite | Casos | Objetivo |
-| --- | ---: | --- |
-| FAQ | 6 | FAQ, determinísticos, latencia y tools |
-| P3 | 15 | Citas, reglas de negocio, latencia, tools y persistencia |
-| Factuality | 2 | Factuality mediante LLM judge para FAQ y citas |
-
-`promptfooconfig.yaml` se conserva como configuración end-to-end conjunta para
-ejecutar todos los casos cuando se desea analizar el sistema completo.
+| Suite | Archivo de Configuración | Casos | Propósito y Criterios Evaluados |
+| :--- | :--- | :---: | :--- |
+| **Principal Unificada** | `evals/promptfooconfig.yaml` | 21 | FAQ + Citas: determinísticos, latencia, tools obligatorias/prohibidas y persistencia en disco. |
+| **Factuality** | `evals/promptfooconfig-factuality.yaml` | 2 | Evaluación con LLM Judge sobre muestra representativa (1 FAQ + 1 Cita). |
+| **Modular FAQ** | `evals/promptfooconfig-faq.yaml` | 6 | Ejecución aislada de preguntas frecuentes contra el agente real. |
+| **Modular P3 (Citas)**| `evals/promptfooconfig-p3.yaml` | 15 | Ejecución aislada de reglas meteorológicas y límites de seguridad. |
 
 ---
 
-# Instalación y preparación
+## 3. Instalación y Preparación
 
-Desde la raíz del repositorio:
+Desde la raíz del repositorio (`hdt6-ai/`):
 
-```bash
-npm install
-```
+1. **Instalar dependencias de Node.js:**
+   ```bash
+   npm install
+   ```
 
-Activar el ambiente virtual utilizado por el proyecto:
+2. **Activar el entorno virtual de Python y cargar variables de entorno:**
+   ```bash
+   source ../ai-function-calls/.venv/bin/activate
+   set -a
+   source .env
+   set +a
+   ```
 
-```bash
-source ../ai-function-calls/.venv/bin/activate
-```
-
-Cargar las variables de ambiente:
-
-```bash
-set -a
-source .env
-set +a
-```
-
-Las credenciales y archivos `.env` no deben incluirse en el repositorio.
+3. **Verificar variables requeridas en `.env`:**
+   ```dotenv
+   GROQ_API_KEY=gsk_...
+   GROQ_MODEL=openai/gpt-oss-20b
+   GROQ_BASE_URL=https://api.groq.com/openai/v1
+   ```
 
 ---
 
-# 1. Evaluación de preguntas frecuentes (FAQ)
+## 4. Arquitectura de Providers y Enrutamiento
 
-Los casos de FAQ están definidos en:
-
-```text
-evals/cases/faq.yaml
-```
-
-y se ejecutan utilizando:
+Para garantizar reproducibilidad sin sacrificar la evaluación del agente conversacional real, se diseñó una arquitectura de providers desacoplada coordinada por `evals/provider_combined.py`:
 
 ```text
-evals/promptfooconfig-faq.yaml
+                        evals/provider_combined.py
+                                    |
+                    +---------------+---------------+
+                    |                               |
+              (Casos FAQ)                    (Casos Citas)
+                    |                               |
+                    v                               v
+             evals/provider.py             evals/provider_p3.py
+                    |                               |
+       [SupervisorCentral real]       [Reglas y Wrappers Centralizados]
+                    |                               |
+          Llama a FAQWorker vía           Ejecución determinista de
+         search_knowledge_base          reglas climáticas con fixtures
 ```
 
-La suite contiene seis casos.
+### ¿Por qué desacoplar el provider de citas (`provider_p3.py`)?
 
-Se evalúan preguntas cuya respuesta existe en la base de conocimientos y
-preguntas para las cuales el agente debe reconocer que no posee información
-suficiente.
+1. **Evaluación de reglas deterministas vs. no-determinismo del LLM:** La calendarización de paracaidismo maneja límites críticos de seguridad aeronáutica (viento $>28\text{ km/h}$, ráfagas $>35\text{ km/h}$, lluvia $>0\text{ mm}$, nubes $>75\%$). Si se dependiera de que un LLM decidiera llamar a las herramientas en cada corrida, una variación estocástica del modelo podría ocultar un fallo en las reglas de negocio.
+2. **Uso de Fixtures Meteorológicos:** Open-Meteo varía día con día. `provider_p3.py` permite inyectar condiciones climáticas simuladas (`weather_fixture`), fechas controladas (`fixed_today`) y aislar el almacenamiento en archivos temporales para evaluar cada rama lógica de forma 100% reproducible.
 
-## Evaluaciones determinísticas
+---
 
-Para información concreta se utilizan assertions como `icontains` y `regex`.
+## 5. Suite Principal Unificada (21 Casos)
 
-Por ejemplo, para la edad mínima:
+La configuración `evals/promptfooconfig.yaml` consolida los 6 casos de FAQ y los 15 casos de citas en una sola corrida end-to-end.
 
-```yaml
-- type: icontains
-  value: "18 años cumplidos"
-```
-
-Para el peso máximo se utiliza un regex tolerante a diferentes caracteres
-Unicode utilizados como espacio:
-
-```yaml
-- type: regex
-  value: '100[\s\u00A0\u202F]*kg'
-```
-
-Esto evita un falso negativo cuando el modelo devuelve visualmente `100 kg`
-pero utiliza un espacio Unicode en lugar de un espacio ASCII convencional.
-
-## Tool execution de FAQ
-
-Los casos también especifican las herramientas que deben ejecutarse.
-
-Por ejemplo:
-
-```yaml
-required_tools:
-  - name: "consultar_faq"
-    origin: "agent:SupervisorCentral"
-
-  - name: "search_knowledge_base"
-    origin: "agent:FAQWorker"
-    error: false
-```
-
-La assertion:
-
-```yaml
-- type: javascript
-  value: file://${configDir}/../assertions.js:toolCallsAndAppointments
-```
-
-comprueba la evidencia real registrada por el provider.
-
-Por lo tanto, no basta con que la respuesta textual sea correcta. También debe
-haberse utilizado la ruta esperada de herramientas.
-
-## Ejecutar FAQ
+### Comando de Ejecución
 
 ```bash
 PROMPTFOO_CONFIG_DIR="$PWD/.promptfoo" \
 npx --no-install promptfoo eval \
-  -c evals/promptfooconfig-faq.yaml \
+  -c evals/promptfooconfig.yaml \
   --no-cache \
-  -o reporte-faq.json
+  -o reporte-evals.json
 ```
 
-El reporte resultante se guarda en:
+### Resultados de la Suite Principal
 
 ```text
-reporte-faq.json
+==================================================
+RESULTADOS DE LA EVALUACIÓN
+==================================================
+Total de Casos: 21
+Passed:         20 (95.24%)
+Failed:         1 (4.76%)
+Errors:         0
+Reporte:        reporte-evals.json
+==================================================
 ```
+
+### Análisis de Ingeniería del Único FAIL
+
+El único caso no superado en la suite fue:
+> **Pregunta:** *"¿Se permite el ingreso de alimentos y bebidas?"*
+
+- **Comportamiento observable:** La traza registrada en `metadata.tool_calls` comprobó que el agente invocó correctamente la herramienta `consultar_faq` desde `agent:SupervisorCentral`, la cual a su vez ejecutó `search_knowledge_base` en `agent:FAQWorker` y extrajo la respuesta adecuada del corpus oficial.
+- **Causa del FAIL:** La llamada completa demoró más de los 60 segundos definidos como umbral de latencia (`threshold: 60000`), alcanzando el límite técnico del provider debido a variabilidad/congestión del servicio de inferencia de Groq.
+- **Justificación de Calidad:** Se tomó la decisión de **conservar este resultado como FAIL** en lugar de incrementar arbitrariamente el umbral de latencia a 120 segundos para forzar un 100%. Este resultado demuestra la utilidad práctica de los evals para detectar cuellos de botella reales de infraestructura y latencia antes de producción.
 
 ---
 
-# 2. Evaluación de calendarización de citas
+## 6. Detalle de Casos: Preguntas Frecuentes (FAQ)
 
-Los casos de calendarización se encuentran en:
+Los casos de FAQ (`evals/cases/faq.yaml`) evalúan tanto preguntas dentro del dominio de la empresa como preguntas que deben ser rechazadas amablemente:
 
-```text
-evals/cases/appointments.yaml
-```
+1. **Caso 1: Peso máximo permitido**
+   - **Pregunta:** *"¿Cuál es el peso máximo permitido para saltar?"*
+   - **Objetivo:** Verificar que el límite operacional es estrictamente de 100 kg.
+   - **Aserción:** Expresión regular `100[\s\u00A0\u202F]*kg`, tolerante a espacios no rompibles (NBSP) o delgados generados por el LLM.
+   - **Tools requeridas:** `consultar_faq` (Supervisor) $\rightarrow$ `search_knowledge_base` (FAQWorker).
 
-Se utiliza una suite aislada:
+2. **Caso 2: Edad mínima requerida**
+   - **Pregunta:** *"¿A partir de qué edad se puede realizar un salto en paracaídas?"*
+   - **Objetivo:** Comprobar la restricción legal y de seguro de mayoría de edad.
+   - **Aserción:** `icontains: "18 años cumplidos"`.
+   - **Tools requeridas:** `consultar_faq` $\rightarrow$ `search_knowledge_base`.
 
-```text
-evals/promptfooconfig-p3.yaml
-```
+3. **Caso 3: Ingreso de alimentos y bebidas**
+   - **Pregunta:** *"¿Se permite el ingreso de alimentos y bebidas al predio?"*
+   - **Objetivo:** Informar sobre la política de admisión de alimentos en las instalaciones.
+   - **Aserción:** `regex: '(no se permite|prohibido|alimentos|bebidas)'`.
+   - **Tools requeridas:** `consultar_faq` $\rightarrow$ `search_knowledge_base`.
 
-junto con:
+4. **Caso 4: Disponibilidad de parqueo**
+   - **Pregunta:** *"¿Tienen parqueo disponible y cuál es el costo?"*
+   - **Objetivo:** Responder que las instalaciones cuentan con parqueo gratuito para clientes.
+   - **Aserción:** `regex: '(parqueo|gratuito|estacionamiento)'`.
+   - **Tools requeridas:** `consultar_faq` $\rightarrow$ `search_knowledge_base`.
 
-```text
-evals/provider_p3.py
-```
+5. **Caso 5: Pregunta fuera de dominio (Fútbol)**
+   - **Pregunta:** *"¿Quién ganó el último mundial de fútbol?"*
+   - **Objetivo:** Validar que el agente no alucine respuestas fuera de su catálogo y delimite cortésmente su alcance.
+   - **Aserción:** `regex: '(no tengo información|solo puedo responder|Parachute S.A.|paracaidismo)'`.
+   - **Comportamiento:** Puede consultar la base de conocimiento y reconocer la falta de datos sin inventar información.
 
-La suite contiene 15 casos que cubren escenarios como:
-
-- clima IDEAL;
-- clima MARGINAL;
-- límite inferior de viento marginal;
-- límite superior de viento marginal;
-- cobertura nubosa marginal;
-- viento superior al límite;
-- ráfagas superiores al límite;
-- precipitación;
-- cobertura nubosa superior al límite;
-- fecha actual;
-- fecha pasada;
-- fecha fuera de la ventana meteorológica;
-- fecha inválida;
-- fallo simulado de la API meteorológica.
-
----
-
-# Provider P3 determinista
-
-`provider_p3.py` utiliza los wrappers y herramientas de la arquitectura
-centralizada, pero no depende de que un LLM decida emitir cada tool call.
-
-Esto permite evaluar las reglas de negocio de manera reproducible.
-
-Los datos externos variables, como el clima y la fecha actual, se controlan
-mediante fixtures.
-
-Esto no reemplaza las herramientas. Las reglas reales de validación,
-clasificación meteorológica y calendarización continúan ejecutándose.
+6. **Caso 6: Pregunta fuera de dominio (Música K-Pop)**
+   - **Pregunta:** *"¿Cuál es la canción más famosa de BTS?"*
+   - **Objetivo:** Comprobar el manejo seguro ante preguntas de cultura popular ajenas a la empresa.
+   - **Aserción:** `regex: '(no tengo información|solo puedo responder|Parachute S.A.|paracaidismo)'`.
 
 ---
 
-# Dependencias aisladas
+## 7. Detalle de Casos: Calendarización de Citas (15 Casos)
 
-Los casos pueden definir:
+Los 15 casos de calendarización (`evals/cases/appointments.yaml`) cubren exhaustivamente condiciones climáticas favorables, límites críticos de seguridad aeronáutica, validación de fechas y manejo de fallos técnicos.
 
-| Variable | Uso |
-| --- | --- |
-| `fixed_today` | Fecha controlada para validaciones. |
-| `weather_fixture` | Condiciones meteorológicas simuladas. |
-| `weather_sequence` | Secuencia de respuestas meteorológicas. |
-| `initial_appointments` | Estado inicial de citas. |
-| `required_tools` | Herramientas que deben ejecutarse. |
-| `forbidden_tools` | Herramientas que no deben ejecutarse. |
-| `expected_created_appointments` | Número esperado de citas creadas. |
+### Control de Dependencias Aisladas y Fixtures
 
-Cada caso utiliza almacenamiento temporal.
+Para garantizar que las pruebas sean 100% deterministas y reproducibles (sin depender del clima en tiempo real ni de fechas calendario fijas), los casos definen variables controladas:
 
-Los evals no deben modificar las citas reales de la aplicación.
+| Variable | Tipo / Ejemplo | Propósito en la Evaluación |
+| :--- | :--- | :--- |
+| `fixed_today` | `"2026-09-30"` | Fija la fecha actual del sistema para evaluar ventanas relativas y pasado. |
+| `weather_fixture` | JSON con métricas climáticas | Simula velocidad y ráfagas de viento, lluvia, nubes y visibilidad. |
+| `weather_sequence` | `["simulated API failure"]` | Inyecta secuencias de fallo en la llamada de red. |
+| `initial_appointments` | `[]` | Estado previo de la base de citas en almacenamiento temporal. |
+| `required_tools` | `[{"name":"weather_tool"}]` | Lista de herramientas que obligatoriamente deben ejecutarse. |
+| `forbidden_tools` | `[{"name":"schedule_tool"}]` | Herramientas cuya ejecución provoca un fallo inmediato (FAIL). |
+| `expected_created_appointments` | `0` o `1` | Número exacto de citas que deben quedar persistidas en disco. |
 
----
+### Desglose Individual de los 15 Casos de Citas
 
-# Tool execution y persistencia
+1. **P3 - Clima Ideal (Persiste la cita):**
+   - **Parámetros:** Fecha `2026-10-01` (hoy `2026-09-30`). Viento $10\text{ km/h}$, ráfagas $20\text{ km/h}$, nubes $10\%$, lluvia $0\text{ mm}$.
+   - **Clasificación:** `IDEAL`.
+   - **Herramientas requeridas:** `weather_tool` $\rightarrow$ `schedule_tool`.
+   - **Persistencia esperada:** `expected_created_appointments: 1`.
 
-Además de comprobar las herramientas ejecutadas, los evals verifican los
-efectos producidos por ellas.
+2. **P3 - Clima Marginal por viento (Permite la cita):**
+   - **Parámetros:** Fecha `2026-10-02`. Viento $20\text{ km/h}$, ráfagas $30\text{ km/h}$, nubes $10\%$, lluvia $0\text{ mm}$.
+   - **Clasificación:** `MARGINAL` (condición para tándem experimentado; requiere confirmación del instructor).
+   - **Herramientas requeridas:** `weather_tool` $\rightarrow$ `schedule_tool`.
+   - **Persistencia esperada:** `expected_created_appointments: 1`.
 
-El provider devuelve metadata con una estructura similar a:
+3. **P3 - Límite de viento mínimo marginal (Exactamente 20 km/h):**
+   - **Parámetros:** Fecha `2026-10-03`. Viento $20\text{ km/h}$ (frontera exacta entre ideal y marginal).
+   - **Clasificación:** `MARGINAL`.
+   - **Herramientas requeridas:** `weather_tool` $\rightarrow$ `schedule_tool`.
+   - **Persistencia esperada:** `expected_created_appointments: 1`.
+
+4. **P3 - Límite de viento máximo marginal (Exactamente 28 km/h):**
+   - **Parámetros:** Fecha `2026-10-04`. Viento $28\text{ km/h}$ (límite superior antes de prohibición).
+   - **Clasificación:** `MARGINAL`.
+   - **Herramientas requeridas:** `weather_tool` $\rightarrow$ `schedule_tool`.
+   - **Persistencia esperada:** `expected_created_appointments: 1`.
+
+5. **P3 - Límite de nubes marginal inferior (Exactamente 30%):**
+   - **Parámetros:** Fecha `2026-10-05`. Cobertura nubosa $30\%$ (frontera entre cielo claro y nubes dispersas).
+   - **Clasificación:** `MARGINAL`.
+   - **Herramientas requeridas:** `weather_tool` $\rightarrow$ `schedule_tool`.
+   - **Persistencia esperada:** `expected_created_appointments: 1`.
+
+6. **P3 - Límite de nubes marginal superior (Exactamente 75%):**
+   - **Parámetros:** Fecha `2026-10-06`. Cobertura nubosa $75\%$ (techo máximo admisible bajo reglas visuales VFR).
+   - **Clasificación:** `MARGINAL`.
+   - **Herramientas requeridas:** `weather_tool` $\rightarrow$ `schedule_tool`.
+   - **Persistencia esperada:** `expected_created_appointments: 1`.
+
+7. **P3 - Viento apenas sobre el límite (28.01 km/h - NO SEGURO / PROHIBIDO):**
+   - **Parámetros:** Fecha `2026-10-07`. Viento $28.01\text{ km/h}$ (supera el umbral por $0.01\text{ km/h}$).
+   - **Clasificación:** `NO SEGURO / PROHIBIDO`.
+   - **Herramientas requeridas:** `weather_tool`.
+   - **Herramientas prohibidas:** `calendarizar_cita`, `schedule_tool`.
+   - **Persistencia esperada:** `expected_created_appointments: 0`.
+
+8. **P3 - Ráfagas apenas sobre el límite (35.1 km/h - NO SEGURO / PROHIBIDO):**
+   - **Parámetros:** Fecha `2026-10-08`. Ráfagas $35.1\text{ km/h}$ (supera el límite de $35\text{ km/h}$).
+   - **Clasificación:** `NO SEGURO / PROHIBIDO`.
+   - **Herramientas prohibidas:** `schedule_tool`.
+   - **Persistencia esperada:** `expected_created_appointments: 0`.
+
+9. **P3 - Precipitación positiva (0.01 mm - NO SEGURO / PROHIBIDO):**
+   - **Parámetros:** Fecha `2026-10-09`. Precipitación $0.01\text{ mm}$ (la lluvia daña el equipo y reduce visibilidad).
+   - **Clasificación:** `NO SEGURO / PROHIBIDO`.
+   - **Herramientas prohibidas:** `schedule_tool`.
+   - **Persistencia esperada:** `expected_created_appointments: 0`.
+
+10. **P3 - Cobertura de nubes sobre el límite (75.01% - NO SEGURO / PROHIBIDO):**
+    - **Parámetros:** Fecha `2026-10-10`. Cobertura nubosa $75.01\%$ (incompatible con vuelo visual VFR).
+    - **Clasificación:** `NO SEGURO / PROHIBIDO`.
+    - **Herramientas prohibidas:** `schedule_tool`.
+    - **Persistencia esperada:** `expected_created_appointments: 0`.
+
+11. **P3 - Fecha de hoy (Fecha válida y cita persistida):**
+    - **Parámetros:** Fecha `2026-10-02` con `fixed_today: 2026-10-02`. Clima `IDEAL`.
+    - **Objetivo:** Verificar que el día actual se considera fecha válida para agendar (día 0 de la ventana).
+    - **Herramientas requeridas:** `weather_tool` $\rightarrow$ `schedule_tool`.
+    - **Persistencia esperada:** `expected_created_appointments: 1`.
+
+12. **P3 - Fecha pasada (Rechazo inmediato sin consultar clima):**
+    - **Parámetros:** Solicitud para `2026-10-01` con `fixed_today: 2026-10-02`.
+    - **Objetivo:** Comprobar la guarda de fechas en el supervisor antes de realizar llamadas de clima innecesarias.
+    - **Herramientas prohibidas:** `consultar_clima`, `weather_tool`, `schedule_tool`.
+    - **Persistencia esperada:** `expected_created_appointments: 0`.
+
+13. **P3 - Fecha fuera de ventana de 16 días:**
+    - **Parámetros:** Solicitud para `2026-10-18` (día 16 posterior a `2026-10-02`).
+    - **Objetivo:** Explicar cortésmente la limitación del pronóstico de Open-Meteo sin agendar.
+    - **Herramientas prohibidas:** `schedule_tool`.
+    - **Persistencia esperada:** `expected_created_appointments: 0`.
+
+14. **P3 - Fecha con formato inválido (e.g. 2026-99-99):**
+    - **Parámetros:** Fecha con mes/día no existente.
+    - **Objetivo:** Manejo seguro de validación de formato sin lanzar excepciones no controladas.
+    - **Herramientas prohibidas:** `schedule_tool`.
+    - **Persistencia esperada:** `expected_created_appointments: 0`.
+
+15. **P3 - Fallo simulado de la API meteorológica:**
+    - **Parámetros:** Inyección de `weather_sequence: '["simulated API failure"]'`.
+    - **Objetivo:** Resiliencia ante desconexiones o respuestas corruptas del proveedor meteorológico; la cita jamás debe persistirse si no hay certeza climática.
+    - **Herramientas requeridas:** `weather_tool` (registrando error controlado).
+    - **Herramientas prohibidas:** `schedule_tool`.
+    - **Persistencia esperada:** `expected_created_appointments: 0`.
+
+### Validación de Persistencia Real en Disco
+
+Los evals no se conforman con que el agente responda textualmente que la cita fue creada; verifican el estado del archivo de almacenamiento temporal. El provider devuelve el estado de persistencia en metadata:
 
 ```json
 {
-  "tool_calls": [],
   "appointments": {
     "initial": [],
-    "final": [],
-    "created": []
+    "final": [
+      {
+        "fecha": "2026-10-10",
+        "cliente": "Usuario de Prueba",
+        "creado_en": "2026-10-03T22:00:00"
+      }
+    ],
+    "created": [
+      {
+        "fecha": "2026-10-10"
+      }
+    ]
   }
 }
 ```
 
-Esto permite distinguir entre:
-
-```text
-"el agente dijo que creó una cita"
-```
-
-y:
-
-```text
-"la herramienta realmente creó una cita"
-```
-
-Por ejemplo:
-
-```yaml
-expected_created_appointments: 1
-```
-
-exige que aparezca una cita nueva en `metadata.appointments.created`.
-
-En escenarios inseguros se utiliza:
-
-```yaml
-expected_created_appointments: 0
-```
-
-junto con herramientas prohibidas como:
-
-```yaml
-forbidden_tools:
-  - name: "calendarizar_cita"
-  - name: "schedule_tool"
-```
+En las pruebas:
+- **Casos válidos (`IDEAL` / `MARGINAL`):** Exigen `expected_created_appointments: 1`.
+- **Casos inválidos o inseguros:** Exigen `expected_created_appointments: 0` y prohíben explícitamente la ejecución de herramientas de reserva (`calendarizar_cita`, `schedule_tool`).
 
 ---
 
-# Evaluaciones determinísticas de citas
+## 8. Suite de Factuality (LLM Judge)
 
-Los casos utilizan expresiones regulares.
-
-Ejemplo de una condición insegura:
-
-```yaml
-- type: regex
-  value: '(NO SEGURO|PROHIBIDO|no fue calendarizada)'
-```
-
-Estas assertions comprueban el contenido de la respuesta, mientras que
-`toolCallsAndAppointments` comprueba el comportamiento interno.
-
----
-
-# Latencia
-
-Tanto FAQ como P3 incluyen una assertion de latencia:
-
-```yaml
-- type: latency
-  threshold: 60000
-```
-
-El umbral utilizado es de 60 segundos.
-
-Es importante distinguir entre el timeout técnico y la evaluación de latencia.
-
-El timeout determina cuánto tiempo puede permanecer ejecutándose un caso antes
-de ser cancelado.
-
-La assertion `latency`, en cambio, representa el criterio evaluado. Un caso que
-tarde más de 60 segundos puede considerarse incorrecto respecto a latencia
-aunque técnicamente haya logrado finalizar.
-
-Para evitar mediciones artificialmente bajas por caché, las evaluaciones de
-latencia se ejecutan utilizando:
-
-```bash
---no-cache
-```
-
----
-
-# Ejecutar P3
-
-```bash
-PROMPTFOO_CONFIG_DIR="$PWD/.promptfoo" \
-npx --no-install promptfoo eval \
-  -c evals/promptfooconfig-p3.yaml \
-  --no-cache \
-  -o reporte-p3.json
-```
-
-## Resultado obtenido
-
-La ejecución final de P3 produjo:
-
-```text
-15 passed
-0 failed
-0 errors
-```
-
-Los 15 casos finalizaron correctamente.
-
----
-
-# 3. Factuality
-
-Además de las assertions determinísticas, la hoja solicita una evaluación de
-factuality.
-
-Para esto se utiliza el grader nativo de Promptfoo:
+Ubicada en `evals/promptfooconfig-factuality.yaml`, utiliza el grader nativo de Promptfoo con un modelo juez:
 
 ```yaml
 - type: factuality
@@ -389,50 +344,17 @@ Para esto se utiliza el grader nativo de Promptfoo:
   metric: Factuality
 ```
 
-La respuesta generada por el agente se compara contra una referencia definida
-previamente en cada caso:
+### ¿Por qué factuality se evalúa en una suite separada?
 
-```yaml
-reference: "..."
-```
+Durante las fases iniciales de desarrollo se probó ejecutar `factuality` sobre los 21 casos en cada iteración. Sin embargo, evaluar factuality añade una segunda llamada de inferencia remota por cada caso (para el modelo juez), lo que provocaba:
 
-La referencia no se genera a partir de la respuesta evaluada.
+- Duplicación en el consumo de tokens y llamadas a la API de Groq.
+- Incremento drástico en la latencia global de la suite.
+- Saturación de los límites de tasa (rate limits) del proveedor.
 
----
+Por ello, se aisló una muestra representativa con 2 casos esenciales (1 consulta de FAQ y 1 solicitud de cita), logrando verificar el grader sin comprometer la estabilidad de las pruebas determinísticas.
 
-# ¿Por qué factuality se ejecuta por separado?
-
-Inicialmente se intentó aplicar el grader de factuality globalmente sobre los
-21 casos.
-
-Esta configuración implica que cada caso no solo ejecuta el sistema multiagente,
-sino que además necesita otra inferencia para que el LLM judge evalúe la
-respuesta.
-
-Durante las pruebas se observó que esto incrementaba considerablemente:
-
-- la cantidad de llamadas remotas;
-- los tokens consumidos;
-- la latencia total;
-- la probabilidad de alcanzar los límites del proveedor;
-- los timeouts de la evaluación completa.
-
-Por esta razón se separó factuality de las suites determinísticas.
-
-Esta separación no elimina factuality.
-
-En su lugar, factuality se evalúa explícitamente sobre una muestra
-representativa de las dos funcionalidades del sistema:
-
-1. una pregunta FAQ;
-2. una calendarización de cita.
-
-De esta manera se demuestra el uso del grader solicitado sin convertir las
-limitaciones externas del proveedor en errores de los 21 casos determinísticos.
-
----
-
-# Ejecutar factuality
+### Ejecución y Resultado de Factuality
 
 ```bash
 PROMPTFOO_CONFIG_DIR="$PWD/.promptfoo" \
@@ -442,32 +364,18 @@ npx --no-install promptfoo eval \
   -o reporte-factuality.json
 ```
 
-## Resultado obtenido
-
-La ejecución final produjo:
-
 ```text
-2 passed
+2 passed (100%)
 0 failed
 0 errors
+Reporte: reporte-factuality.json
 ```
-
-La ejecución utilizó un LLM judge y registró tokens específicamente asociados
-al grading, confirmando que el grader de factuality fue ejecutado.
 
 ---
 
-# Evidencia de ejecución de herramientas
+## 9. Evidencia de Ejecución de Herramientas (`metadata.tool_calls`)
 
-`evals/provider.py` crea una traza independiente para cada caso.
-
-La respuesta del agente permanece en:
-
-```text
-output
-```
-
-mientras que la evidencia de herramientas se devuelve en:
+Para inspeccionar la ejecución interna del sistema, los providers capturan cada invocación y la estructuran en el formato estandarizado:
 
 ```json
 {
@@ -476,8 +384,10 @@ mientras que la evidencia de herramientas se devuelve en:
       {
         "order": 1,
         "name": "consultar_faq",
-        "arguments": {},
-        "result": "...",
+        "arguments": {
+          "pregunta": "¿Cuál es el peso máximo?"
+        },
+        "result": "El límite de peso es 100 kg...",
         "error": null,
         "origin": "agent:SupervisorCentral"
       }
@@ -486,67 +396,31 @@ mientras que la evidencia de herramientas se devuelve en:
 }
 ```
 
-La evaluación registra llamadas observables realmente ejecutadas.
-
-No se infiere la ejecución de una herramienta a partir del texto de la
-respuesta.
-
-Esto permite comprobar:
-
-- qué herramienta fue llamada;
-- desde qué agente;
-- en qué orden;
-- con qué argumentos;
-- si produjo un error;
-- qué resultado produjo.
+El script `assertions.js` evalúa este arreglo verificando:
+- Invocación de herramientas requeridas (`required_tools`).
+- Ausencia total de herramientas vetadas (`forbidden_tools`).
+- Origen del agente emisor (`origin`).
+- Manejo correcto de errores sin excepciones no controladas.
 
 ---
 
-# Interpretación de resultados
+## 10. Interpretación de Estados
 
-## PASS
-
-Todas las assertions del caso se cumplieron.
-
-## FAIL
-
-La ejecución terminó, pero una o más assertions no cumplieron el criterio.
-
-Por ejemplo:
-
-- contenido incorrecto;
-- factuality incorrecto;
-- herramienta requerida ausente;
-- herramienta prohibida ejecutada;
-- persistencia incorrecta;
-- latencia superior al umbral.
-
-## ERROR
-
-El caso no pudo completar normalmente la evaluación.
-
-Ejemplos observados durante desarrollo:
-
-- timeout;
-- rate limit del proveedor;
-- límite global de duración.
-
-Los errores de infraestructura se distinguen de los fallos funcionales del
-agente.
+- **PASS:** La respuesta cumplió todas las aserciones determinísticas, respetó el umbral de latencia (<60s), invocó las herramientas obligatorias, no llamó herramientas prohibidas y persistió la cantidad exacta de citas esperadas.
+- **FAIL:** La prueba culminó normalmente, pero alguna aserción no se satisfizo (e.g. latencia excedida o texto ausente).
+- **ERROR:** La prueba no pudo ejecutarse debido a una falla técnica de infraestructura (e.g. timeout de red, rate limit de Groq o error de sintaxis en configuración).
 
 ---
 
-# Reportes finales
+## 11. Reportes Generados y Visualización
 
-Los reportes principales generados por Promptfoo son:
+Los reportes generados como evidencia oficial de entrega son:
 
-```text
-reporte-faq.json
-reporte-p3.json
-reporte-factuality.json
-```
+- **`reporte-evals.json` (Raíz):** Resultado de los 21 casos de la Suite Principal.
+- **`reporte-factuality.json` (Raíz):** Resultado de los 2 casos de la Suite de Factuality.
+- **`evals/reporte-p3.json` (Carpeta evals):** Resultado de la suite modular de citas.
 
-También se pueden inspeccionar los resultados utilizando:
+Para visualizar de manera interactiva la matriz de resultados, trazas de herramientas y comparativas:
 
 ```bash
 npx --no-install promptfoo view
@@ -554,44 +428,15 @@ npx --no-install promptfoo view
 
 ---
 
-# Cobertura de requisitos
+## 12. Matriz de Cumplimiento de Requisitos
 
-| Requisito | Evidencia |
-| --- | --- |
-| FAQ | `faq.yaml` + `reporte-faq.json` |
-| Calendarización | `appointments.yaml` + `reporte-p3.json` |
-| Factuality | `promptfooconfig-factuality.yaml` + `reporte-factuality.json` |
-| Determinísticos | `icontains` / `regex` |
-| Latencia | assertion `latency` |
-| Tool execution | `assertions.js` + `metadata.tool_calls` |
-| Persistencia | `metadata.appointments.created` |
-
----
-
-# Resumen de la estrategia
-
-La evaluación se divide en tres suites:
-
-```text
-FAQ
- ├── 6 casos
- ├── determinísticos
- ├── latencia
- └── tool execution
-
-P3 / citas
- ├── 15 casos
- ├── determinísticos
- ├── latencia
- ├── tool execution
- └── persistencia
-
-Factuality
- ├── 1 caso FAQ
- ├── 1 caso de cita
- └── LLM judge de Promptfoo
-```
-
-Esta separación permite evaluar cada propiedad con la técnica apropiada y evita
-confundir fallos funcionales del agente con restricciones de infraestructura
-del proveedor LLM.
+| Requisito del Enunciado | Estrategia de Evaluación | Ubicación en el Repositorio |
+| :--- | :--- | :--- |
+| **FAQ** | 6 casos cubriendo políticas, límites y fuera de dominio. | `evals/cases/faq.yaml` |
+| **Calendarización** | 15 casos cubriendo todas las ramas meteorológicas y fechas. | `evals/cases/appointments.yaml` |
+| **Factuality** | Grader nativo Promptfoo evaluado con LLM judge. | `evals/promptfooconfig-factuality.yaml` |
+| **Determinísticos** | Aserciones con `icontains` y `regex` con espacios Unicode. | `evals/cases/faq.yaml`, `evals/cases/appointments.yaml` |
+| **Latencia** | Aserción `latency` con threshold estricto de 60 s sin caché. | `evals/promptfooconfig.yaml` |
+| **Tool Execution** | Verificación de traza en `metadata.tool_calls` con tools requeridas y prohibidas. | `assertions.js` |
+| **Persistencia** | Validación en disco de citas agendadas vs. citas impedidas. | `assertions.js` + `metadata.appointments` |
+| **Reportes JSON** | Exportación formal de resultados solicitada por la rúbrica. | `reporte-evals.json`, `reporte-factuality.json` |
