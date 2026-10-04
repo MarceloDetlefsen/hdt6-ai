@@ -1,51 +1,33 @@
-description: "Evaluación end-to-end de Promptfoo para Parachute S.A."
+description: "Evaluación determinística de Parachute S.A."
 
 prompts:
   - "{{question}}"
 
 providers:
-  - id: file://provider.py
+  - id: file://provider_combined.py
     config:
-      # Un solo worker porque el provider utiliza estado temporal por caso
-      # y para reducir presión sobre el proveedor LLM.
       workers: 1
       timeout: 60000
 
 evaluateOptions:
-  # Los casos se ejecutan secuencialmente.
   maxConcurrency: 1
-
-  # Timeout técnico por caso.
   timeoutMs: 65000
 
-  # Máximo de 8 minutos para la suite end-to-end.
+  # FAQ puede tardar considerablemente porque ejecuta el agente real.
   maxEvalTimeMs: 480000
 
-  # La caché se desactiva para que las mediciones de latencia
-  # correspondan a ejecuciones reales.
   cache: false
 
 defaultTest:
   merge: true
   assert:
-    # Eval de latencia.
-    # El caso puede ejecutar hasta 65 s, pero se considera que
-    # incumple el criterio de latencia si supera 60 s.
     - type: latency
       threshold: 60000
 
-# Los casos agregan sus propias assertions:
+# Ejecuta:
 #
-# FAQ:
-#   - icontains / regex
-#   - tool execution mediante assertions.js
+# - 6 casos FAQ con provider.py
+# - 15 casos P3 con provider_p3.py
 #
-# Citas:
-#   - regex
-#   - tool execution mediante assertions.js
-#   - verificación de persistencia de citas
-#
-# Factuality basado en LLM se ejecuta por separado en
-# promptfooconfig-factuality.yaml para evitar multiplicar las
-# llamadas remotas y afectar esta suite con rate limits/latencia.
+# Cada caso agrega sus assertions determinísticas y de tool execution.
 tests: file://cases/*.yaml
