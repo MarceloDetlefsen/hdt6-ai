@@ -4,35 +4,51 @@ prompts:
   - "{{question}}"
 
 providers:
-  # El proveedor conserva estado temporal (fixtures y citas) por cada caso;
-  # un solo worker evita competir por ese estado y por la cuota de Groq.
   - id: file://provider.py
     config:
       workers: 1
-      # Promptfoo mata y reinicia el worker si una ejecución del agente queda
-      # bloqueada en un proveedor externo.
       timeout: 60000
 
-# Los casos FAQ hacen varias llamadas encadenadas (supervisor, worker y HDT4).
-# Ejecutarlos en paralelo satura Groq y hace que parezca que la evaluación no
-# termina. Estos límites hacen que el fallo sea explícito y acotado.
 evaluateOptions:
+  # El provider modifica estado temporal durante cada caso y Groq tiene
+  # límites de uso, por lo que ejecutamos un caso a la vez.
   maxConcurrency: 1
-  timeoutMs: 65000
-  maxEvalTimeMs: 480000
-  cache: true
 
-# Defaults compartidos por P2 y P3. Los casos ya verifican contenido con
-# regex/icontains y comportamiento con assertions.js. No se usan graders LLM
-# aquí: añadir factuality o llm-rubric multiplica las llamadas remotas y vuelve
-# no determinista una suite cuya evidencia principal es la traza de tools.
+  # Timeout por caso.
+  timeoutMs: 65000
+
+  # Límite máximo de la evaluación completa.
+  maxEvalTimeMs: 480000
+
+  # Se desactiva para que la medición de latencia sea real.
+  cache: false
+
 defaultTest:
   merge: true
+
   assert:
+    # 1. LATENCIA
     - type: latency
-      # Límite de observabilidad; el timeout anterior es la barrera definitiva.
       threshold: 60000
 
-# P2 y P3 mantienen sus casos separados. Estos archivos contienen solamente
-# un caso mínimo de ejemplo y deben ampliarse con sus respectivos datasets.
+    # 2. FACTUALITY
+    # Compara la respuesta producida por el agente contra la referencia
+    # definida en cada caso.
+    #
+    # Se especifica Groq explícitamente para evitar que Promptfoo intente
+    # seleccionar automáticamente un grader incompatible.
+    - type: factuality
+      value: "{{reference}}"
+      provider: groq:openai/gpt-oss-20b
+      metric: Factuality
+
+# Los archivos dentro de cases/ agregan:
+#
+# 3. EVALS DETERMINÍSTICOS
+#    - icontains para FAQ
+#    - regex para citas
+#
+# 4. TOOL EXECUTION
+#    - assertions.js verifica metadata.tool_calls
+#    - también comprueba citas creadas/no creadas
 tests: file://cases/*.yaml
