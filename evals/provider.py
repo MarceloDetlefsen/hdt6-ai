@@ -31,7 +31,6 @@ from shared.parachute import (  # noqa: E402
 _EVAL_LOCK = threading.RLock()
 _DEFAULT_DEADLINE_SECONDS = 55
 
-
 class EvalDeadlineExceeded(TimeoutError):
     """Indica que una llamada del agente excedió el presupuesto del caso."""
 

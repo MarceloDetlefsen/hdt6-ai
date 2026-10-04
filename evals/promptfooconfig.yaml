@@ -1,4 +1,4 @@
-description: "Evaluación de Promptfoo para Parachute S.A."
+description: "Evaluación end-to-end de Promptfoo para Parachute S.A."
 
 prompts:
   - "{{question}}"
@@ -6,49 +6,46 @@ prompts:
 providers:
   - id: file://provider.py
     config:
+      # Un solo worker porque el provider utiliza estado temporal por caso
+      # y para reducir presión sobre el proveedor LLM.
       workers: 1
       timeout: 60000
 
 evaluateOptions:
-  # El provider modifica estado temporal durante cada caso y Groq tiene
-  # límites de uso, por lo que ejecutamos un caso a la vez.
+  # Los casos se ejecutan secuencialmente.
   maxConcurrency: 1
 
-  # Timeout por caso.
+  # Timeout técnico por caso.
   timeoutMs: 65000
 
-  # Límite máximo de la evaluación completa.
+  # Máximo de 8 minutos para la suite end-to-end.
   maxEvalTimeMs: 480000
 
-  # Se desactiva para que la medición de latencia sea real.
+  # La caché se desactiva para que las mediciones de latencia
+  # correspondan a ejecuciones reales.
   cache: false
 
 defaultTest:
   merge: true
-
   assert:
-    # 1. LATENCIA
+    # Eval de latencia.
+    # El caso puede ejecutar hasta 65 s, pero se considera que
+    # incumple el criterio de latencia si supera 60 s.
     - type: latency
       threshold: 60000
 
-    # 2. FACTUALITY
-    # Compara la respuesta producida por el agente contra la referencia
-    # definida en cada caso.
-    #
-    # Se especifica Groq explícitamente para evitar que Promptfoo intente
-    # seleccionar automáticamente un grader incompatible.
-    - type: factuality
-      value: "{{reference}}"
-      provider: groq:openai/gpt-oss-20b
-      metric: Factuality
-
-# Los archivos dentro de cases/ agregan:
+# Los casos agregan sus propias assertions:
 #
-# 3. EVALS DETERMINÍSTICOS
-#    - icontains para FAQ
-#    - regex para citas
+# FAQ:
+#   - icontains / regex
+#   - tool execution mediante assertions.js
 #
-# 4. TOOL EXECUTION
-#    - assertions.js verifica metadata.tool_calls
-#    - también comprueba citas creadas/no creadas
+# Citas:
+#   - regex
+#   - tool execution mediante assertions.js
+#   - verificación de persistencia de citas
+#
+# Factuality basado en LLM se ejecuta por separado en
+# promptfooconfig-factuality.yaml para evitar multiplicar las
+# llamadas remotas y afectar esta suite con rate limits/latencia.
 tests: file://cases/*.yaml

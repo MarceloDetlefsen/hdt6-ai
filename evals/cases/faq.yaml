@@ -9,8 +9,8 @@
           error: false
       expected_created_appointments: 0
     assert:
-      - type: icontains
-        value: '100 kg'
+      - type: regex
+        value: '100[\s\u00A0\u202F]*kg'
       - type: javascript
         value: file://${configDir}/../assertions.js:toolCallsAndAppointments
 
@@ -39,7 +39,7 @@
           origin: "agent:SupervisorCentral"
         - name: "search_knowledge_base"
           origin: "agent:FAQWorker"
-          error : false
+          error: false
       expected_created_appointments: 0
     assert:
       - type: icontains
