@@ -3,6 +3,8 @@
 ### Miembros del Equipo
 
 - Marcelo Detlefsen - 24554
+- Julían Divas - 24687
+- Luis Angel Girón - 24753
 
 ---
 
